@@ -19,10 +19,10 @@ class LecturerController extends Controller
         return view('lecturer.dashboard', compact('totalStudents', 'totalMaterials', 'recentResults', 'materials'));
     }
 
-    public function createMaterial()
-    {
-        return view('lecturer.materials.create');
-    }
+   public function createMaterial()
+{
+    return view('lecturer.materials.create'); 
+}
 
     public function storeMaterial(Request $request)
     {
@@ -63,14 +63,13 @@ class LecturerController extends Controller
         return redirect()->route('lecturer.dashboard');
     }
 
-    public function studentProgress()
+   public function studentProgress()
     {
-        $students = User::where('role', 'student')->get();
-        return view('lecturer.students.progress', compact('students'));
-    }
-    public function createQuiz(Material $material)
-    {
-        return view('lecturer.quizzes.create', compact('material'));
+        // Ambil semua data mahasiswa
+        $students = \App\Models\User::where('role', 'student')->get();
+        
+        // KUNCINYA DI SINI: Hapus kata 'students.' biar dia nyari di folder yang bener!
+        return view('lecturer.progress', compact('students'));
     }
 
     public function storeQuiz(Request $request, Material $material)
@@ -98,4 +97,11 @@ class LecturerController extends Controller
 
         return redirect()->route('lecturer.dashboard');
     }
+
+    public function indexMaterial()
+{
+    // Narik semua materi buatan dosen yang lagi login
+    $materials = \App\Models\Material::all(); 
+    return view('lecturer.materials.index', compact('materials'));
+}
 }

@@ -41,7 +41,6 @@ Route::middleware(['auth'])->group(function () {
     // ─── LECTURER ─────────────────────────────────────────────────
     Route::middleware(['role:lecturer'])->prefix('lecturer')->name('lecturer.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\LecturerController::class, 'dashboard'])->name('dashboard');
-
         Route::get('/materials/create', [\App\Http\Controllers\LecturerController::class, 'createMaterial'])->name('materials.create');
         Route::post('/materials', [\App\Http\Controllers\LecturerController::class, 'storeMaterial'])->name('materials.store');
         Route::get('/materials/{material}/edit', [\App\Http\Controllers\LecturerController::class, 'editMaterial'])->name('materials.edit');
@@ -49,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/students/progress', [\App\Http\Controllers\LecturerController::class, 'studentProgress'])->name('students.progress');
         Route::get('/materials/{material}/quiz/create', [\App\Http\Controllers\LecturerController::class, 'createQuiz'])->name('quiz.create');
         Route::post('/materials/{material}/quiz', [\App\Http\Controllers\LecturerController::class, 'storeQuiz'])->name('quiz.store');
+        Route::get('/materials', [\App\Http\Controllers\LecturerController::class, 'indexMaterial'])->name('materials.index');
     });
 
     // ─── STUDENT ──────────────────────────────────────────────────

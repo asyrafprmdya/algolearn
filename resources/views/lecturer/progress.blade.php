@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="flex h-screen bg-slate-50 overflow-hidden">
+    
    @php
     // Otak bunglon: ngecek yang login ini Dosen atau Mahasiswa
     $isLecturer = Auth::user()->role === 'lecturer'; 
@@ -83,68 +84,85 @@
         </form>
     </div>
 </aside>
-    <main class="flex-1 flex flex-col overflow-hidden">
+
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-100">
+        <header class="h-20 flex justify-end items-center px-8 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur-md z-10">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 border-2 border-white shadow-md flex items-center justify-center text-white font-black text-lg">
+                {{ substr(Auth::user()->name, 0, 1) }}
+            </div>
+        </header>
+
         <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-4xl mx-auto" x-data="{
-                questions: [{ text: '', a: '', b: '', c: '', d: '', answer: 'a' }],
-                addQuestion() { this.questions.push({ text: '', a: '', b: '', c: '', d: '', answer: 'a' }); },
-                removeQuestion(index) { this.questions.splice(index, 1); }
-            }">
-                <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-slate-800 mb-2">Buat Kuis: {{ $material->title }}</h1>
-                    <p class="text-slate-500">Siksa mahasiswamu dengan pertanyaan-pertanyaan menjebak di sini.</p>
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-8 animate-fade-in-up">
+                    <h1 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tight">Panel Progress</h1>
+                    <p class="text-slate-500 font-medium">Pantau kelakuan mahasiswa ini. Kalau nilainya hancur karena sistem, kasih mereka ampunan reset pretest.</p>
                 </div>
 
-                <form action="{{ route('lecturer.quiz.store', $material->id) }}" method="POST">
-                    @csrf
-                    
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-2">Judul Kuis</label>
-                                <input type="text" name="title" required class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500" placeholder="Contoh: Evaluasi Array">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-2">Nilai Lulus (KKM)</label>
-                                <input type="number" name="passing_grade" value="70" required class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500">
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-slate-300 text-xs uppercase tracking-wider">
+                                <th class="px-6 py-5 font-black">Identitas Mahasiswa</th>
+                                <th class="px-6 py-5 font-black text-center">Level Saat Ini</th>
+                                <th class="px-6 py-5 font-black text-center">Status Pretest</th>
+                                <th class="px-6 py-5 font-black text-center">Intervensi Dosen (Aksi)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            @forelse($students as $student)
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-black text-lg shrink-0">
+                                        {{ substr($student->name, 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-800">{{ $student->name }}</p>
+                                        <p class="text-xs text-slate-400 font-mono">{{ $student->email }}</p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($student->level == 'Lanjutan')
+                                        <span class="px-3 py-1 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase">Lanjutan</span>
+                                    @elseif($student->level == 'Menengah')
+                                        <span class="px-3 py-1 rounded-md text-[10px] font-black bg-blue-100 text-blue-700 border border-blue-200 uppercase">Menengah</span>
+                                    @else
+                                        <span class="px-3 py-1 rounded-md text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200 uppercase">Pemula</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($student->pretest_completed)
+                                        <span class="text-emerald-500 font-bold text-xs"><i class="fa-solid fa-check-circle"></i> Selesai</span>
+                                    @else
+                                        <span class="text-amber-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> Belum/Menunggu</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex justify-center space-x-2">
+                                        <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                            <i class="fa-solid fa-eye"></i> Log
+                                        </button>
+                                        
+                                        @if($student->pretest_completed)
+                                        <form action="#" method="POST" onsubmit="return confirm('Lu yakin mau ngereset pretest bocah ini? Kasta dia bakal balik ke Pemula lho!');">
+                                            @csrf
+                                            <button type="submit" class="bg-red-50 hover:bg-red-500 text-red-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold border border-red-200 hover:border-red-500 transition-colors" title="Reset Uji Nyali">
+                                                <i class="fa-solid fa-rotate-left"></i> Reset
+                                            </button>
+                                        </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold">Belum ada player yang join ke server lu.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
 
-                    <template x-for="(q, index) in questions" :key="index">
-                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6 relative">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="font-bold text-slate-800">Soal #<span x-text="index + 1"></span></h3>
-                                <button type="button" @click="removeQuestion(index)" x-show="questions.length > 1" class="text-red-500 hover:text-red-700 text-sm font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
-                            </div>
-
-                            <textarea x-bind:name="'questions['+index+'][question_text]'" x-model="q.text" required rows="3" class="w-full px-4 py-3 rounded-lg border border-slate-300 mb-4 focus:ring-2 focus:ring-amber-500" placeholder="Tulis pertanyaan di sini..."></textarea>
-                            
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div><span class="text-xs font-bold text-slate-500">Opsi A</span><input type="text" x-bind:name="'questions['+index+'][option_a]'" x-model="q.a" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500"></div>
-                                <div><span class="text-xs font-bold text-slate-500">Opsi B</span><input type="text" x-bind:name="'questions['+index+'][option_b]'" x-model="q.b" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500"></div>
-                                <div><span class="text-xs font-bold text-slate-500">Opsi C</span><input type="text" x-bind:name="'questions['+index+'][option_c]'" x-model="q.c" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500"></div>
-                                <div><span class="text-xs font-bold text-slate-500">Opsi D</span><input type="text" x-bind:name="'questions['+index+'][option_d]'" x-model="q.d" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500"></div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-bold text-slate-700 mr-4">Jawaban Benar:</label>
-                                <select x-bind:name="'questions['+index+'][correct_option]'" x-model="q.answer" class="px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 bg-white">
-                                    <option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option>
-                                </select>
-                            </div>
-                        </div>
-                    </template>
-
-                    <div class="flex space-x-4 mb-8">
-                        <button type="button" @click="addQuestion()" class="flex-1 py-3 border-2 border-dashed border-amber-500 text-amber-600 font-bold rounded-xl hover:bg-amber-50 transition-colors">
-                            <i class="fa-solid fa-plus mr-2"></i> Tambah Soal Lain
-                        </button>
-                        <button type="submit" class="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-md">
-                            <i class="fa-solid fa-save mr-2"></i> Simpan Kuis
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </main>

@@ -117,13 +117,15 @@
 
                 @php
                     $levelScores = ['Pemula' => 1, 'Menengah' => 2, 'Lanjutan' => 3];
-                    $userScore = $levelScores[Auth::user()->getLevel()] ?? 1;
+                    // KUNCINYA DI SINI: Panggil ->level murni dari DB, bukan fungsi yang kepanjangan!
+                    $userScore = $levelScores[Auth::user()->level] ?? 1;
                 @endphp
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
                     @forelse($materials as $item)
                     @php
                         $matScore = $levelScores[$item->level] ?? 1;
+                        // Kalau skor kasta user >= skor materi, gembok terbuka!
                         $isLocked = $matScore > $userScore;
                     @endphp
 

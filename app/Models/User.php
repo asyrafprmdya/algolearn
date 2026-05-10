@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -16,6 +17,7 @@ class User extends Authenticatable
         'password',
         'level',
         'pretest_completed',
+        'role',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -24,16 +26,14 @@ class User extends Authenticatable
     public function isLecturer(): bool { return $this->role === 'lecturer'; }
     public function isStudent(): bool { return $this->role === 'student'; }
 
-    // Relasi ke kuis/tugas (biarin aja kalau nanti dipake)
     public function pretests(): HasMany { return $this->hasMany(Pretest::class); }
+    public function latestPretest(): HasOne { return $this->hasOne(Pretest::class)->latestOfMany(); }
 
-    // KODINGAN MUTLAK 1: Cek langsung ke kolom 'pretest_completed' di tabel users
     public function hasCompletedPretest(): bool
     {
         return $this->pretest_completed == 1;
     }
 
-    // KODINGAN MUTLAK 2: Ambil level langsung dari kolom 'level' di tabel users
     public function getLevel(): string
     {
         if ($this->level === 'Lanjutan') {
