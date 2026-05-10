@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PretestController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\Admin\AdminController;
 
 Route::get('/', function () { return redirect()->route('login'); });
 
@@ -15,13 +16,32 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
+
+    // ─── ADMIN ───────────────────────────────────────────────────
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::view('/dashboard', 'admin.dashboard')->name('dashboard');
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+        // Manajemen Pengguna
+        Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+        Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
+        Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
+        Route::get('/users/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+        Route::put('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
+        Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
+        Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
+        Route::post('/users/import', [AdminController::class, 'importUsers'])->name('users.import');
+
+        // Pengaturan & Laporan
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        Route::put('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+        Route::get('/reports/export', [AdminController::class, 'exportReport'])->name('reports.export');
     });
 
-   Route::middleware(['role:lecturer'])->prefix('lecturer')->name('lecturer.')->group(function () {
+    // ─── LECTURER ─────────────────────────────────────────────────
+    Route::middleware(['role:lecturer'])->prefix('lecturer')->name('lecturer.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\LecturerController::class, 'dashboard'])->name('dashboard');
-        
+
         Route::get('/materials/create', [\App\Http\Controllers\LecturerController::class, 'createMaterial'])->name('materials.create');
         Route::post('/materials', [\App\Http\Controllers\LecturerController::class, 'storeMaterial'])->name('materials.store');
         Route::get('/materials/{material}/edit', [\App\Http\Controllers\LecturerController::class, 'editMaterial'])->name('materials.edit');
@@ -31,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/materials/{material}/quiz', [\App\Http\Controllers\LecturerController::class, 'storeQuiz'])->name('quiz.store');
     });
 
+    // ─── STUDENT ──────────────────────────────────────────────────
     Route::middleware(['role:student'])->prefix('student')->name('student.')->group(function () {
         Route::get('/pretest', [PretestController::class, 'index'])->name('pretest.index');
         Route::post('/pretest', [PretestController::class, 'store'])->name('pretest.store');
