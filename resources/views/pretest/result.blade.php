@@ -2,8 +2,7 @@
 @section('content')
 
 @php
-    // Kita tangkep nilainya dari Session (kalau lemparannya pakai ->with('score', ...)) 
-    // Atau dari variabel langsung (kalau lemparannya pakai compact('score'))
+    // Cek session dulu, kalau zonk cek variabel lemparan, kalau zonk juga baru 0
     $finalScore = session('score') ?? $score ?? 0;
 @endphp
 
@@ -25,7 +24,6 @@
         <div class="flex flex-col sm:flex-row justify-center items-center gap-6 mb-12">
             <div class="w-full sm:w-1/2 bg-blue-50 border-2 border-blue-200 rounded-3xl p-6 relative">
                 <p class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-2">Skor Pretest</p>
-                <!-- INI YANG BIKIN ANGKA 0 ILANG DAN BERUBAH JADI SKOR ASLI -->
                 <div class="text-6xl font-black text-[#0b276b]">{{ $finalScore }}</div>
             </div>
 
@@ -41,7 +39,7 @@
         <div class="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100 mb-10 text-left">
             <h3 class="font-bold text-slate-700 mb-2"><i class="fa-solid fa-bullhorn text-amber-500 mr-2"></i> Info Penting!</h3>
             <p class="text-slate-500 font-medium text-sm leading-relaxed">
-                Level lu menentukan materi mana yang bisa lu buka duluan. Selesaikan kuis-kuis di level lu saat ini buat naik ke kasta selanjutnya. Jangan kasih kendor!
+                Skor lu menentukan seberapa pro lu di mata sistem. Jangan bangga dulu kalau skor tinggi tapi males ngerjain kuis selanjutnya.
             </p>
         </div>
 
@@ -49,7 +47,6 @@
             <span>Mulai Petualangan</span>
             <i class="fa-solid fa-rocket"></i>
         </a>
-        
     </div>
 </div>
 @endsection

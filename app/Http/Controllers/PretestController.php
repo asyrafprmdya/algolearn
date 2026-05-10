@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\PretestQuestion;
-use App\Models\Pretest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,61 +15,48 @@ class PretestController extends Controller
         }
         
         $questions = PretestQuestion::inRandomOrder()->limit(10)->get();
-        return view('pretest.index', compact('questions'));
+        
+        return view('student.pretest.index', compact('questions'));
     }
 
     public function store(Request $request)
     {
-        $questions = PretestQuestion::whereIn('id', array_keys($request->answers ?? []))->get();
-        $correctAnswers = 0;
-        $evaluation = [];
+        $user = Auth::user();
+        $answers = $request->input('answers', []);
+        
+        $questionIds = array_keys($answers);
+        $questions = PretestQuestion::whereIn('id', $questionIds)->get();
+        
+        $correctCount = 0;
+        $total = $questions->count();
 
         foreach ($questions as $q) {
-            $userAnswer = $request->answers[$q->id] ?? null;
-            $isCorrect = $q->correct_answer === $userAnswer;
-
-            if ($isCorrect) {
-                $correctAnswers++;
+            if (isset($answers[$q->id]) && $answers[$q->id] == $q->correct_option) {
+                $correctCount++;
             }
-
-            $evaluation[] = [
-                'question' => $q->question,
-                'user_answer' => $userAnswer ? $q->{'option_'.$userAnswer} : 'Tidak dijawab',
-                'correct_answer' => $q->{'option_'.$q->correct_answer},
-                'is_correct' => $isCorrect,
-            ];
         }
 
-        $score = count($questions) > 0 ? ($correctAnswers / count($questions)) * 100 : 0;
+        $score = $total > 0 ? round(($correctCount / $total) * 100) : 0;
 
-        $level = match (true) {
-            $score > 70 => 'Level 3 - Lanjutan',
-            $score > 40 => 'Level 2 - Menengah',
-            default => 'Level 1 - Pemula',
-        };
+        if ($score >= 80) {
+            $user->update(['level' => 'Lanjutan', 'pretest_completed' => true]);
+        } elseif ($score >= 50) {
+            $user->update(['level' => 'Menengah', 'pretest_completed' => true]);
+        } else {
+            $user->update(['level' => 'Pemula', 'pretest_completed' => true]);
+        }
 
-        Pretest::create([
-            'user_id' => Auth::id(),
-            'score' => $score,
-            'level' => $level,
-            'completed_at' => now(),
-        ]);
-
-        session()->flash('pretest_result', [
-            'score' => $score,
-            'level' => $level,
-            'evaluation' => $evaluation
-        ]);
-
-        return redirect()->route('student.pretest.result');
+        return redirect()->route('student.pretest.result')->with('score', $score);
     }
 
     public function result()
     {
-        if (!session('pretest_result')) {
+        $score = session('score');
+        
+        if ($score === null && !Auth::user()->pretest_completed) {
             return redirect()->route('student.dashboard');
         }
 
-        return view('pretest.result', ['result' => session('pretest_result')]);
+        return view('student.pretest.result', compact('score'));
     }
 }
