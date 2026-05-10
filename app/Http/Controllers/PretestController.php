@@ -16,7 +16,7 @@ class PretestController extends Controller
         
         $questions = PretestQuestion::inRandomOrder()->limit(10)->get();
         
-        return view('student.pretest.index', compact('questions'));
+        return view('pretest.index', compact('questions'));
     }
 
     public function store(Request $request)
@@ -57,6 +57,6 @@ class PretestController extends Controller
             return redirect()->route('student.dashboard');
         }
 
-        return view('student.pretest.result', compact('score'));
+        return view('pretest.result', compact('score'));
     }
 }
