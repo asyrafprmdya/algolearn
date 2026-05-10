@@ -28,23 +28,26 @@ class PretestController extends Controller
         $questions = PretestQuestion::whereIn('id', $questionIds)->get();
         
         $correctCount = 0;
-        $total = $questions->count();
+        $total = 10;
 
         foreach ($questions as $q) {
-            if (isset($answers[$q->id]) && $answers[$q->id] == $q->correct_option) {
+            if (isset($answers[$q->id]) && strtolower($answers[$q->id]) === strtolower($q->correct_option)) {
                 $correctCount++;
             }
         }
 
-        $score = $total > 0 ? round(($correctCount / $total) * 100) : 0;
+        $score = round(($correctCount / $total) * 100);
 
         if ($score >= 80) {
-            $user->update(['level' => 'Lanjutan', 'pretest_completed' => true]);
+            $user->level = 'Lanjutan';
         } elseif ($score >= 50) {
-            $user->update(['level' => 'Menengah', 'pretest_completed' => true]);
+            $user->level = 'Menengah';
         } else {
-            $user->update(['level' => 'Pemula', 'pretest_completed' => true]);
+            $user->level = 'Pemula';
         }
+
+        $user->pretest_completed = true;
+        $user->save();
 
         return redirect()->route('student.pretest.result')->with('score', $score);
     }
