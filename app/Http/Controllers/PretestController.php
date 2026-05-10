@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PretestQuestion;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,31 +24,35 @@ class PretestController extends Controller
     {
         $user = Auth::user();
         $answers = $request->input('answers', []);
-        
-        $questionIds = array_keys($answers);
-        $questions = PretestQuestion::whereIn('id', $questionIds)->get();
+        $questions = PretestQuestion::all();
         
         $correctCount = 0;
-        $total = 10;
+        $total = 10; 
 
         foreach ($questions as $q) {
-            if (isset($answers[$q->id]) && strtolower($answers[$q->id]) === strtolower($q->correct_option)) {
-                $correctCount++;
+            if (isset($answers[$q->id])) {
+                $userAnswer = strtolower(trim($answers[$q->id]));
+                $correctAnswer = strtolower(trim($q->correct_answer)); 
+                
+                if ($userAnswer === $correctAnswer) {
+                    $correctCount++;
+                }
             }
         }
 
         $score = round(($correctCount / $total) * 100);
 
+        $kasta = 'Pemula';
         if ($score >= 80) {
-            $user->level = 'Lanjutan';
+            $kasta = 'Lanjutan';
         } elseif ($score >= 50) {
-            $user->level = 'Menengah';
-        } else {
-            $user->level = 'Pemula';
+            $kasta = 'Menengah';
         }
 
-        $user->pretest_completed = true;
-        $user->save();
+        $dbUser = User::find($user->id);
+        $dbUser->level = $kasta;
+        $dbUser->pretest_completed = 1;
+        $dbUser->save(); 
 
         return redirect()->route('student.pretest.result')->with('score', $score);
     }
@@ -56,8 +61,12 @@ class PretestController extends Controller
     {
         $score = session('score');
         
-        if ($score === null && !Auth::user()->pretest_completed) {
-            return redirect()->route('student.dashboard');
+        if ($score === null) {
+            if (!Auth::user()->hasCompletedPretest()) {
+                return redirect()->route('student.pretest.index');
+            } else {
+                return redirect()->route('student.dashboard');
+            }
         }
 
         return view('pretest.result', compact('score'));
