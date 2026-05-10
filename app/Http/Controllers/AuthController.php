@@ -18,10 +18,6 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-        ], [
-            'email.unique' => 'Email ini udah dipake lek! Lu mau bikin ternak akun?',
-            'password.confirmed' => 'Password konfirmasinya kaga sama, cek lagi jari lu.',
-            'password.min' => 'Password minimal 8 karakter dong, jangan pelit amat.',
         ]);
 
         $user = User::create([
@@ -50,11 +46,11 @@ class AuthController extends Controller
                 'admin' => redirect()->route('admin.dashboard'),
                 'lecturer' => redirect()->route('lecturer.dashboard'),
                 'student' => redirect()->route('student.dashboard'),
-                default => abort(403, 'Role alien tidak dikenali.'),
+                default => abort(403, 'Role tidak valid.'),
             };
         }
 
-        return back()->with('error', 'Email atau password salah lek! Jangan ngadi-ngadi deh.');
+        return back()->with('error', 'Email atau password salah.');
     }
 
     public function logout(Request $request)
