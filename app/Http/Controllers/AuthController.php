@@ -16,8 +16,12 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
+        ], [
+            'email.unique' => 'Email ini udah dipake lek! Lu mau bikin ternak akun?',
+            'password.confirmed' => 'Password konfirmasinya kaga sama, cek lagi jari lu.',
+            'password.min' => 'Password minimal 8 karakter dong, jangan pelit amat.',
         ]);
 
         $user = User::create([
@@ -50,7 +54,7 @@ class AuthController extends Controller
             };
         }
 
-        return back()->withErrors(['email' => 'Email atau password salah.']);
+        return back()->with('error', 'Email atau password salah lek! Jangan ngadi-ngadi deh.');
     }
 
     public function logout(Request $request)

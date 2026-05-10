@@ -10,6 +10,39 @@
     }
 </style>
 
+@if($errors->any() || session('error'))
+<div x-data="{ show: true }"
+     x-show="show"
+     x-init="setTimeout(() => show = false, 5000)"
+     x-transition:enter="transition ease-out duration-500"
+     x-transition:enter-start="opacity-0 -translate-y-10 scale-90"
+     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+     x-transition:leave="transition ease-in duration-300"
+     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+     x-transition:leave-end="opacity-0 -translate-y-10 scale-90"
+     class="fixed top-10 left-1/2 transform -translate-x-1/2 z-[100] w-[90%] max-w-md">
+
+    <div class="bg-red-500 text-white px-6 py-4 rounded-[1.5rem] shadow-[0_8px_0_0_#991b1b] border-2 border-red-400 flex items-center space-x-4 hover:translate-y-[2px] hover:shadow-[0_6px_0_0_#991b1b] transition-all cursor-pointer" @click="show = false">
+        <div class="bg-red-600 rounded-xl w-12 h-12 flex items-center justify-center shrink-0 border-2 border-red-400 shadow-inner text-2xl animate-bounce">
+            <i class="fa-solid fa-skull-crossbones"></i>
+        </div>
+        <div class="flex-1">
+            <h4 class="font-black text-xl tracking-wider uppercase mb-1 drop-shadow-md">Wasted!</h4>
+            <p class="font-bold text-red-100 text-sm leading-tight">
+                @if(session('error'))
+                    {{ session('error') }}
+                @else
+                    {{ $errors->first() ?: 'Cek lagi form lu lek, ada yang salah tuh!' }}
+                @endif
+            </p>
+        </div>
+        <div class="text-red-300 hover:text-white transition-colors shrink-0">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="flex min-h-screen bg-slate-50 font-sans">
     
     <div class="hidden lg:flex flex-col justify-center items-center w-1/2 bg-emerald-500 text-white p-12 relative overflow-hidden">
