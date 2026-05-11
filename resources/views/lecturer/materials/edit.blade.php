@@ -20,7 +20,7 @@
     }
 }">
     
-@php
+ @php
     // Otak bunglon: ngecek yang login ini Dosen atau Mahasiswa
     $isLecturer = Auth::user()->role === 'lecturer'; 
     
@@ -67,6 +67,17 @@
                     <i class="fa-solid fa-hammer w-6 text-center text-lg"></i>
                     <span>Buat Materi</span>
                 </a>
+                
+                {{-- Tambahan menu pretest dan kuis sesuai request lek --}}
+                <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i>
+                    <span>Markas Pretest</span>
+                </a>
+                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i>
+                    <span>Bank Kuis</span>
+                </a>
+
                 <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                     <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i>
                     <span>Laporan Mahasiswa</span>

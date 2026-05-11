@@ -62,7 +62,7 @@
                             <i class="fa-solid fa-check-to-slot"></i>
                         </div>
                         <p class="text-xs text-slate-500 mb-1">Selesai Pretest</p>
-                        <h3 class="text-2xl font-bold text-slate-800">{{ $stats['pretest_done'] }}</h3>
+                        <h3 class="text-2xl font-bold text-slate-800">{{ $stats['total_pretes'] }}</h3>
                     </div>
                 </div>
 

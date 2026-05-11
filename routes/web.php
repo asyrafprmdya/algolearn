@@ -5,7 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PretestController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\MaterialController;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\LecturerController;
 
 Route::get('/', function () { return redirect()->route('login'); });
 
@@ -49,6 +50,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/materials/{material}/quiz/create', [\App\Http\Controllers\LecturerController::class, 'createQuiz'])->name('quiz.create');
         Route::post('/materials/{material}/quiz', [\App\Http\Controllers\LecturerController::class, 'storeQuiz'])->name('quiz.store');
         Route::get('/materials', [\App\Http\Controllers\LecturerController::class, 'indexMaterial'])->name('materials.index');
+        Route::get('/pretest', [LecturerController::class, 'indexPretest'])->name('pretest.index');
+        Route::post('/pretest', [LecturerController::class, 'storePretest'])->name('pretest.store');
+        Route::put('/pretest/{pretest}', [LecturerController::class, 'updatePretest'])->name('pretest.update');
+        Route::delete('/pretest/{pretest}', [LecturerController::class, 'destroyPretest'])->name('pretest.destroy');
+        Route::get('/quizzes', [LecturerController::class, 'indexQuiz'])->name('quiz.index');
+        Route::get('/materials/{material}/quiz/create', [LecturerController::class, 'createQuiz'])->name('quiz.create');
+        Route::post('/materials/{material}/quiz', [LecturerController::class, 'storeQuiz'])->name('quiz.store');
+        Route::get('/quizzes/{quiz}/edit', [LecturerController::class, 'editQuiz'])->name('quiz.edit');
+        Route::put('/quizzes/{quiz}', [LecturerController::class, 'updateQuiz'])->name('quiz.update');
+        Route::get('/quizzes/{quiz}', [LecturerController::class, 'showQuiz'])->name('quiz.show');
+        Route::delete('/quizzes/{quiz}', [LecturerController::class, 'destroyQuiz'])->name('quiz.destroy');
     });
 
     // ─── STUDENT ──────────────────────────────────────────────────

@@ -49,6 +49,17 @@
                     <i class="fa-solid fa-hammer w-6 text-center text-lg"></i>
                     <span>Buat Materi</span>
                 </a>
+                
+                {{-- Tambahan menu pretest dan kuis sesuai request lek --}}
+                <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i>
+                    <span>Markas Pretest</span>
+                </a>
+                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i>
+                    <span>Bank Kuis</span>
+                </a>
+
                 <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                     <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i>
                     <span>Laporan Mahasiswa</span>
@@ -141,6 +152,29 @@
                     </div>
                 </div>
 
+                {{-- TAMBAHAN: Kartu Aksi Cepat biar dosen kaga nyasar nyari pretest/kuis --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up" style="animation-delay: 0.05s;">
+                    <a href="{{ route('lecturer.pretest.index') }}" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-amber-400 hover:shadow-md transition-all flex items-center space-x-4 group">
+                        <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-scroll"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-slate-800 group-hover:text-amber-600 transition-colors">Markas Pretest</h3>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Tambah atau koreksi soal ujian maba di sini.</p>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('lecturer.quiz.index') }}" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-400 hover:shadow-md transition-all flex items-center space-x-4 group">
+                        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-dungeon"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-slate-800 group-hover:text-emerald-600 transition-colors">Bank Kuis</h3>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Atur jebakan kuis untuk setiap materi yang ada.</p>
+                        </div>
+                    </a>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up" style="animation-delay: 0.1s;">
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
@@ -148,7 +182,7 @@
                         </div>
                         <table class="w-full text-left border-collapse">
                             <tbody class="divide-y divide-slate-100 text-sm">
-                                @forelse($recentResults as $result)
+                                @forelse($recentResults ?? [] as $result)
                                 <tr class="hover:bg-slate-50">
                                     <td class="px-6 py-4 font-bold text-slate-700">{{ $result->user->name ?? 'Anonim' }}</td>
                                     <td class="px-6 py-4 text-slate-500 truncate max-w-[150px]">{{ $result->quiz->title ?? 'Kuis Dihapus' }}</td>
@@ -172,7 +206,7 @@
                         </div>
                         <table class="w-full text-left border-collapse">
                             <tbody class="divide-y divide-slate-100 text-sm">
-                                @forelse($materials as $material)
+                                @forelse($materials ?? [] as $material)
                                 <tr class="hover:bg-slate-50 group">
                                     <td class="px-6 py-4 font-bold text-slate-700">{{ $material->title }}</td>
                                     <td class="px-6 py-4">
@@ -180,7 +214,7 @@
                                             {{ $material->level }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="px-6 py-4 text-right flex justify-end">
                                         <a href="{{ route('lecturer.materials.edit', $material->id) }}" class="text-slate-400 hover:text-amber-500 transition-colors mr-2" title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
