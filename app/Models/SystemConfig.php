@@ -28,4 +28,8 @@ class SystemConfig extends Model
             ['value' => $value]
         );
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> d3b8efd95c1fd8065ace124ea5abb73573121522
