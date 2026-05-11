@@ -14,7 +14,8 @@ class Material extends Model
         'level',
         'video_url',
         'code_visualization',
-        'is_published'
+        'is_published',
+        'pdf_path'
     ];
 
     public function quizzes(): HasMany

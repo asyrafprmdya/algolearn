@@ -44,16 +44,16 @@
             <nav class="px-4 space-y-2 mb-4">
                 @if($isLecturer)
                     <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i><span>Dashboard</span>
+                        <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i><span>God's Eye</span>
                     </a>
                     <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Kelola Materi</span>
+                        <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Inventori Materi</span>
                     </a>
                     <a href="{{ route('lecturer.materials.create') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.create', 'lecturer.materials.edit', 'lecturer.quiz.create') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-hammer w-6 text-center text-lg"></i><span>Buat Materi</span>
+                        <i class="fa-solid fa-hammer w-6 text-center text-lg"></i><span>Pabrik Quest</span>
                     </a>
                     <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i><span>Laporan Mahasiswa</span>
+                        <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i><span>CCTV Player</span>
                     </a>
                 @endif
             </nav>

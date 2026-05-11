@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Material;
 use App\Models\QuizResult;
+use Illuminate\Support\Facades\Storage;
 
 class LecturerController extends Controller
 {
@@ -19,10 +20,17 @@ class LecturerController extends Controller
         return view('lecturer.dashboard', compact('totalStudents', 'totalMaterials', 'recentResults', 'materials'));
     }
 
-   public function createMaterial()
-{
-    return view('lecturer.materials.create'); 
-}
+    public function indexMaterial()
+    {
+        $materials = Material::orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")->get(); 
+        
+        return view('lecturer.materials.index', compact('materials'));
+    }
+
+    public function createMaterial()
+    {
+        return view('lecturer.materials.create'); 
+    }
 
     public function storeMaterial(Request $request)
     {
@@ -32,13 +40,19 @@ class LecturerController extends Controller
             'content' => 'required|string',
             'video_url' => 'nullable|url',
             'code_visualization' => 'nullable|string',
+            'pdf_file' => 'nullable|mimes:pdf|max:10240',
         ]);
 
-        $validated['is_published'] = $request->has('is_published');
+        $data = $request->except(['pdf_file', 'is_published']);
+        $data['is_published'] = $request->has('is_published');
         
-        Material::create($validated);
+        if ($request->hasFile('pdf_file')) {
+            $data['pdf_path'] = $request->file('pdf_file')->store('materials/pdfs', 'public');
+        }
         
-        return redirect()->route('lecturer.dashboard');
+        Material::create($data);
+        
+        return redirect()->route('lecturer.materials.index');
     }
 
     public function editMaterial(Material $material)
@@ -54,54 +68,42 @@ class LecturerController extends Controller
             'content' => 'required|string',
             'video_url' => 'nullable|url',
             'code_visualization' => 'nullable|string',
+            'pdf_file' => 'nullable|mimes:pdf|max:10240',
         ]);
 
-        $validated['is_published'] = $request->has('is_published');
+        $data = $request->except(['pdf_file', 'is_published']);
+        $data['is_published'] = $request->has('is_published');
         
-        $material->update($validated);
+        if ($request->hasFile('pdf_file')) {
+            if ($material->pdf_path) {
+                Storage::disk('public')->delete($material->pdf_path);
+            }
+            $data['pdf_path'] = $request->file('pdf_file')->store('materials/pdfs', 'public');
+        }
         
-        return redirect()->route('lecturer.dashboard');
+        $material->update($data);
+        
+        return redirect()->route('lecturer.materials.index');
     }
 
-   public function studentProgress()
+    public function studentProgress()
     {
-        // Ambil semua data mahasiswa
-        $students = \App\Models\User::where('role', 'student')->get();
+        $students = User::where('role', 'student')->get();
         
-        // KUNCINYA DI SINI: Hapus kata 'students.' biar dia nyari di folder yang bener!
         return view('lecturer.progress', compact('students'));
     }
 
-    public function storeQuiz(Request $request, Material $material)
+    public function createQuiz($id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'passing_grade' => 'required|integer|min:0|max:100',
-            'questions' => 'required|array|min:1',
-            'questions.*.question_text' => 'required|string',
-            'questions.*.option_a' => 'required|string',
-            'questions.*.option_b' => 'required|string',
-            'questions.*.option_c' => 'required|string',
-            'questions.*.option_d' => 'required|string',
-            'questions.*.correct_option' => 'required|in:a,b,c,d',
-        ]);
-
-        $quiz = $material->quizzes()->create([
-            'title' => $request->title,
-            'passing_grade' => $request->passing_grade,
-        ]);
-
-        foreach ($request->questions as $q) {
-            $quiz->questions()->create($q);
-        }
-
-        return redirect()->route('lecturer.dashboard');
+        $material = Material::findOrFail($id);
+        
+        return view('lecturer.quizzes.create', compact('material'));
     }
 
-    public function indexMaterial()
-{
-    // Narik semua materi buatan dosen yang lagi login
-    $materials = \App\Models\Material::all(); 
-    return view('lecturer.materials.index', compact('materials'));
-}
+    public function storeQuiz(Request $request, $id)
+    {
+        $material = Material::findOrFail($id);
+
+        return redirect()->route('lecturer.dashboard')->with('success', 'Kuis berhasil dibuat (boongan dulu)!');
+    }
 }
