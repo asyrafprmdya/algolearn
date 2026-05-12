@@ -48,10 +48,10 @@
                         <i class="fa-solid fa-border-all w-6 text-center text-lg"></i><span>Beranda</span>
                     </a>
                     <a href="{{ route('student.material.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.material.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-book-open w-6 text-center text-lg"></i><span>Kurikulum</span>
+                        <i class="fa-solid fa-book-open w-6 text-center text-lg"></i><span>Materi</span>
                     </a>
                     <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-clipboard-list w-6 text-center text-lg"></i><span>Tugas Saya</span>
+                        <i class="fa-solid fa-clipboard-list w-6 text-center text-lg"></i><span>Latihan</span>
                     </a>
                     <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.progress.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                         <i class="fa-solid fa-chart-line w-6 text-center text-lg"></i><span>Laporan Progress</span>
@@ -142,8 +142,6 @@
                                     $rawContent = $material->content ?? '';
                                     $safeContent = strip_tags($rawContent, '<b><i><u><strong><em><br><p><ul><ol><li><h2><h3><h4>');
                                     $safeContent = nl2br($safeContent);
-                                    
-                                    // Custom styling khusus konten HTML dari Quill
                                     $safeContent = str_replace('<h2>', '<h2 class="text-2xl font-black text-[#0b276b] border-b-2 border-slate-100 pb-3 mb-4 mt-8 uppercase tracking-tight">', $safeContent);
                                     $safeContent = str_replace('<h3>', '<h3 class="text-xl font-bold text-slate-800 mb-3 mt-6">', $safeContent);
                                     $safeContent = str_replace('<p>', '<p class="mb-4 text-slate-600 font-medium leading-loose text-justify">', $safeContent);

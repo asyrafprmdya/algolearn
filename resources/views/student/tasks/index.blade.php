@@ -1,29 +1,17 @@
 @extends('layouts.app')
 @section('content')
 <style>
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-    }
-
-    @keyframes pulse-soft {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-    }
-    .animate-pulse-soft {
-        animation: pulse-soft 2s infinite ease-in-out;
-    }
+    .path-line { position: absolute; left: 50%; width: 6px; background: #e2e8f0; z-index: 0; transform: translateX(-50%); }
+    .level-node { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .level-node:hover { transform: scale(1.15); }
+    .locked { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .floating { animation: float 3s ease-in-out infinite; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden font-sans">
-    
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ showLevelUp: false }">
     <aside class="w-64 bg-white border-r-2 border-slate-200 flex flex-col justify-between hidden md:flex shrink-0 z-20">
         <div class="flex-1 overflow-y-auto">
-            
             <div class="h-20 flex items-center px-6 border-b-2 border-slate-100 mb-4 sticky top-0 bg-white/90 backdrop-blur-sm z-10">
                 <div class="flex items-center space-x-3 text-[#0b276b]">
                     <div class="bg-[#0b276b] text-white p-2.5 rounded-xl shadow-[0_3px_0_0_#061a4f]">
@@ -36,7 +24,7 @@
             </div>
 
             <div class="px-6 mb-8 mt-2">
-                <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Status Kasta Lu</p>
+                <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Status Level Kamu</p>
                 <div class="inline-block animate-pulse-soft">
                     <p class="text-sm font-black text-emerald-600 bg-emerald-50 py-2 px-4 rounded-xl uppercase tracking-wide border-2 border-emerald-100 shadow-sm flex items-center gap-2">
                         <i class="fa-solid fa-medal text-emerald-500"></i> {{ Auth::user()->getLevel() }}
@@ -52,12 +40,12 @@
                 
                 <a href="{{ route('student.material.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.material.*') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-book-open w-6 text-center text-lg {{ request()->routeIs('student.material.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
-                    <span>Kurikulum</span>
+                    <span>Materi</span>
                 </a>
                 
                 <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-clipboard-list w-6 text-center text-lg {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
-                    <span>Tugas Saya</span>
+                    <span>Latihan</span>
                 </a>
                 
                 <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.progress.index') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
@@ -72,99 +60,95 @@
                 @csrf
                 <button type="submit" class="flex items-center space-x-3 px-4 py-4 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-2xl font-bold text-sm w-full transition-colors group">
                     <i class="fa-solid fa-arrow-right-from-bracket w-6 text-center text-lg group-hover:-translate-x-1 transition-transform"></i>
-                    <span>Keluar Game</span>
+                    <span>Keluar</span>
                 </button>
             </form>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden relative">
-        <header class="h-20 flex justify-between items-center px-8 shrink-0 border-b-2 border-slate-200 bg-white/80 backdrop-blur-md z-10 sticky top-0">
-            <div class="flex items-center">
-                <h1 class="text-2xl font-black text-slate-800 tracking-tight">Daftar Misi 🎯</h1>
-            </div>
-            <div class="flex items-center space-x-6">
-                <div class="w-12 h-12 rounded-full bg-[#0b276b] border-4 border-white shadow-md overflow-hidden flex items-center justify-center text-white font-black text-lg cursor-pointer hover:scale-105 transition-transform">
-                    {{ substr(Auth::user()->name, 0, 1) }}
-                </div>
+        <header class="h-20 flex justify-between items-center px-8 shrink-0 border-b-2 border-slate-100 bg-white/80 backdrop-blur-md z-10">
+            <h1 class="text-xl font-black text-[#0b276b] uppercase tracking-tight">Arena Latihan</h1>
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-xs font-black uppercase">🔥 5 Day Streak</div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
-            <div class="max-w-4xl mx-auto space-y-6">
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-xl mx-auto relative pb-32">
                 
-                <div class="mb-10 animate-fade-in-up">
-                    <p class="text-slate-500 font-medium text-lg">Selesaikan semua misi evaluasi di bawah buat buktiin kalau lu pantes naik kasta.</p>
-                </div>
+                @php
+                    $sections = [
+                        'Pemula' => ['color' => 'emerald', 'bg' => 'bg-emerald-500', 'border' => 'border-emerald-700', 'icon' => 'fa-seedling'],
+                        'Menengah' => ['color' => 'blue', 'bg' => 'bg-blue-500', 'border' => 'border-blue-700', 'icon' => 'fa-fire'],
+                        'Lanjutan' => ['color' => 'purple', 'bg' => 'bg-purple-500', 'border' => 'border-purple-700', 'icon' => 'fa-crown']
+                    ];
+                    $canUnlockNext = true;
+                @endphp
 
-                @forelse($quizzes as $index => $quiz)
-                    @php
-                        $isCompleted = isset($results[$quiz->id]);
-                        $score = $results[$quiz->id] ?? 0;
-                        $isPassed = $score >= $quiz->passing_grade;
-                    @endphp
-
-                    <div class="bg-white rounded-[2rem] border-2 border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-blue-200 transition-colors animate-fade-in-up group" style="animation-delay: {{ $index * 0.1 }}s;">
-                        
-                        <div class="flex items-start sm:items-center space-x-5 sm:space-x-6">
-                            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 border-2 transition-transform group-hover:scale-110 
-                                {{ $isCompleted ? ($isPassed ? 'bg-emerald-50 text-emerald-500 border-emerald-200 shadow-[0_4px_0_0_#a7f3d0]' : 'bg-red-50 text-red-500 border-red-200 shadow-[0_4px_0_0_#fecaca]') : 'bg-blue-50 text-[#0b276b] border-blue-200 shadow-[0_4px_0_0_#bfdbfe]' }}">
-                                <i class="fa-solid {{ $isCompleted ? ($isPassed ? 'fa-check-double' : 'fa-skull-crossbones') : 'fa-bolt' }}"></i>
-                            </div>
-                            
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-widest"><i class="fa-solid fa-book text-slate-300 mr-1"></i> {{ $quiz->material->title }}</p>
-                                <h3 class="text-xl font-black text-slate-800 mb-3 group-hover:text-[#0b276b] transition-colors">{{ $quiz->title }}</h3>
-                                
-                                <div class="flex flex-wrap items-center gap-3 text-sm font-bold">
-                                    <span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-lg border border-amber-200">
-                                        <i class="fa-solid fa-bullseye mr-1"></i> KKM: {{ $quiz->passing_grade }}
-                                    </span>
-                                    
-                                    @if($isCompleted)
-                                        <span class="px-3 py-1 rounded-lg border {{ $isPassed ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200' }}">
-                                            <i class="fa-solid {{ $isPassed ? 'fa-award' : 'fa-fire' }} mr-1"></i> Skor: {{ $score }}
-                                        </span>
-                                    @else
-                                        <span class="bg-slate-50 text-slate-400 px-3 py-1 rounded-lg border border-slate-200">
-                                            <i class="fa-regular fa-clock mr-1"></i> Belum Dikerjakan
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
+                @foreach($sections as $levelName => $theme)
+                    <div class="mb-24 relative">
+                        <div class="text-center mb-16 relative z-10">
+                            <span class="px-8 py-3 {{ $theme['bg'] }} text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-sm border-b-4 {{ $theme['border'] }}">
+                                <i class="fa-solid {{ $theme['icon'] }} mr-2"></i> Unit: {{ $levelName }}
+                            </span>
                         </div>
 
-                        <div class="shrink-0 flex flex-col gap-3 w-full md:w-auto mt-4 md:mt-0 pt-6 md:pt-0 border-t-2 border-slate-100 md:border-0">
-                            @if($isCompleted)
-                                @if($isPassed)
-                                    <button disabled class="w-full md:w-auto px-8 py-4 bg-slate-50 text-emerald-500 font-black text-lg rounded-2xl cursor-not-allowed border-2 border-slate-200 flex items-center justify-center space-x-2">
-                                        <i class="fa-solid fa-lock"></i>
-                                        <span>Tuntas</span>
-                                    </button>
-                                @else
-                                    <a href="{{ route('student.quiz.show', $quiz->id) }}" class="block w-full md:w-auto px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-black text-lg rounded-2xl uppercase tracking-wider transition-all text-center shadow-[0_6px_0_0_#991b1b] hover:shadow-[0_2px_0_0_#991b1b] hover:translate-y-[4px] animate-pulse-soft flex items-center justify-center space-x-2">
-                                        <i class="fa-solid fa-rotate-right"></i>
-                                        <span>Remedial!</span>
-                                    </a>
-                                @endif
-                            @else
-                                <a href="{{ route('student.quiz.show', $quiz->id) }}" class="block w-full md:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black text-lg rounded-2xl uppercase tracking-wider transition-all text-center shadow-[0_6px_0_0_#b45309] hover:shadow-[0_2px_0_0_#b45309] hover:translate-y-[4px] flex items-center justify-center space-x-2">
-                                    <span>Gas Kuis</span>
-                                    <i class="fa-solid fa-play"></i>
-                                </a>
+                        <div class="relative flex flex-col items-center space-y-16">
+                            @php 
+                                $units = $materials[$levelName] ?? collect([]);
+                                $levelClear = true;
+                            @endphp
+
+                            @forelse($units as $index => $unit)
+                                @php
+                                    $isDone = in_array($unit->id, $completedMaterialIds ?? []);
+                                    if(!$isDone) $levelClear = false;
+                                    $isLocked = !$canUnlockNext;
+                                    $zigzag = ($index % 2 == 0) ? 'mr-24' : 'ml-24';
+                                @endphp
+
+                                <div class="relative z-10 {{ $zigzag }}">
+                                    @if($isLocked)
+                                        <div class="level-node locked w-24 h-24 bg-slate-200 rounded-full border-b-8 border-slate-300 flex items-center justify-center shadow-lg">
+                                            <i class="fa-solid fa-lock text-slate-400 text-3xl"></i>
+                                        </div>
+                                    @else
+                                        <div class="relative">
+                                            <a href="{{ route('student.quiz.show', $unit->id) }}" 
+                                               class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all
+                                               {{ $isDone ? 'bg-emerald-500 border-emerald-700' : $theme['bg'].' '.$theme['border'] }}">
+                                                <i class="fa-solid {{ $isDone ? 'fa-check' : 'fa-star' }} text-white text-3xl"></i>
+                                            </a>
+                                            <div class="absolute top-1/2 {{ ($index % 2 == 0) ? 'left-full ml-6' : 'right-full mr-6' }} -translate-y-1/2 bg-white px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-sm whitespace-nowrap">
+                                                <p class="text-sm font-black text-slate-800">{{ $unit->title }}</p>
+                                                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1">
+                                                    <div class="{{ $isDone ? 'w-full' : 'w-0' }} bg-emerald-500 h-1.5 rounded-full"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="bg-white p-4 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-sm">Belum ada latihan di kasta ini.</div>
+                            @endforelse
+
+                            @if($units->count() > 0)
+                                <div class="path-line top-12 bottom-0"></div>
                             @endif
                         </div>
                     </div>
-                @empty
-                    <div class="py-24 flex flex-col items-center justify-center text-center bg-white rounded-[2rem] border-2 border-slate-200 border-dashed animate-fade-in-up">
-                        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 text-5xl mb-6 shadow-inner">
-                            <i class="fa-solid fa-mug-hot"></i>
-                        </div>
-                        <h3 class="text-2xl font-black text-slate-800 mb-2">Misi Kosong Lek!</h3>
-                        <p class="text-slate-500 max-w-sm text-lg font-medium">Belum ada bos yang harus lu kalahin di level ini. Mending ngopi dulu.</p>
-                    </div>
-                @endforelse
+                    @php $canUnlockNext = $levelClear; @endphp
+                @endforeach
+            </div>
+        </div>
 
+        <div x-show="showLevelUp" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b276b]/90 backdrop-blur-md p-6" style="display: none;" x-transition>
+            <div class="text-center">
+                <div class="floating mb-6"><i class="fa-solid fa-trophy text-8xl text-amber-400"></i></div>
+                <h2 class="text-5xl font-black text-white uppercase mb-2">Kasta Terlampaui!</h2>
+                <p class="text-amber-200 font-bold mb-8 text-xl">Lanjutin perjuangan lu ke kasta berikutnya lek!</p>
+                <button @click="showLevelUp = false" class="bg-white text-[#0b276b] font-black px-12 py-4 rounded-2xl shadow-[0_6px_0_0_#cbd5e1] hover:translate-y-[2px] transition-all uppercase">Gaskeun!</button>
             </div>
         </div>
     </main>

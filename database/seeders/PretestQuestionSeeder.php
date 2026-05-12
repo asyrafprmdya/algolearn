@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\PretestQuestion;
+use App\Models\PretestQuestion; // <-- INI YANG BENER LEK!
 
 class PretestQuestionSeeder extends Seeder
 {
@@ -212,8 +212,10 @@ class PretestQuestionSeeder extends Seeder
             ]
         ];
 
+        PretestQuestion::truncate(); // <-- KOSONGIN PAKE MODEL YANG BENER
+
         foreach ($questions as $q) {
-            PretestQuestion::create($q);
+            PretestQuestion::create($q); // <-- BIKIN DATA PAKE MODEL YANG BENER
         }
     }
 }

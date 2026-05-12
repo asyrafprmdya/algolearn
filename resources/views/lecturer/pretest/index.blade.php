@@ -12,69 +12,102 @@
 
 <div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ 
     showAddModal: false, 
-    showEditModal: false, editUrl: '', editData: { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'a' },
+    showEditModal: false, editUrl: '', editData: { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a' },
     showDeleteModal: false, deleteUrl: ''
 }">
-    @php
-        $isLecturer = Auth::user()->role === 'lecturer'; 
-        $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
-        $textMenu = $isLecturer ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]';
-        $activeMenu = $isLecturer ? 'bg-amber-500 text-slate-900 shadow-[0_4px_0_0_#b45309]' : 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f]';
-    @endphp
+@php
+    // Otak bunglon: ngecek yang login ini Dosen atau Mahasiswa
+    $isLecturer = Auth::user()->role === 'lecturer'; 
+    
+    // Ganti kulit otomatis
+    $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
+    $textMenu = $isLecturer ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]';
+    $activeMenu = $isLecturer ? 'bg-amber-500 text-slate-900 shadow-[0_4px_0_0_#b45309]' : 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f]';
+@endphp
 
-    <aside class="w-64 {{ $bgSidebar }} border-r flex flex-col justify-between hidden md:flex shrink-0 z-20">
-        <div class="flex-1 overflow-y-auto">
-            <div class="h-20 flex items-center px-6 border-b {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} mb-4 sticky top-0 z-10">
-                <div class="flex items-center space-x-3 {{ $isLecturer ? 'text-white' : 'text-[#0b276b]' }}">
-                    <div class="{{ $isLecturer ? 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-[#0b276b]' }} text-white p-2.5 rounded-xl shadow-lg">
-                        <i class="fa-solid {{ $isLecturer ? 'fa-dragon' : 'fa-gamepad' }}"></i>
-                    </div>
-                    <h2 class="font-black text-xl tracking-wide uppercase">AlgoLearn</h2>
+<aside class="w-64 {{ $bgSidebar }} border-r flex flex-col justify-between hidden md:flex shrink-0 z-20">
+    <div class="flex-1 overflow-y-auto">
+        <div class="h-20 flex items-center px-6 border-b {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} mb-4 sticky top-0 z-10">
+            <div class="flex items-center space-x-3 {{ $isLecturer ? 'text-white' : 'text-[#0b276b]' }}">
+                <div class="{{ $isLecturer ? 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-[#0b276b]' }} text-white p-2.5 rounded-xl shadow-lg">
+                    <i class="fa-solid {{ $isLecturer ? 'fa-dragon' : 'fa-gamepad' }}"></i>
                 </div>
+                <h2 class="font-black text-xl tracking-wide uppercase">AlgoLearn</h2>
             </div>
+        </div>
 
-            <div class="px-6 mb-8 mt-2">
-                <p class="text-[10px] font-black {{ $isLecturer ? 'text-slate-500' : 'text-slate-400' }} uppercase tracking-widest mb-2">Role: Dosen</p>
-                <div class="inline-block">
-                    <p class="text-xs font-black {{ $isLecturer ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-600 bg-emerald-50 border-emerald-100' }} py-2 px-4 rounded-xl uppercase tracking-wide border-2 shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-shield-halved"></i> GM MODE
-                    </p>
-                </div>
+        <div class="px-6 mb-8 mt-2">
+            <p class="text-[10px] font-black {{ $isLecturer ? 'text-slate-500' : 'text-slate-400' }} uppercase tracking-widest mb-2">
+                {{ $isLecturer ? 'Role: Dosen' : 'Status Level' }}
+            </p>
+            <div class="inline-block">
+                <p class="text-xs font-black {{ $isLecturer ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-600 bg-emerald-50 border-emerald-100' }} py-2 px-4 rounded-xl uppercase tracking-wide border-2 shadow-sm flex items-center gap-2">
+                    <i class="fa-solid {{ $isLecturer ? 'fa-shield-halved' : 'fa-medal' }}"></i> 
+                    {{ $isLecturer ? 'Dosen Pengampu' : Auth::user()->getLevel() }}
+                </p>
             </div>
+        </div>
 
-            <nav class="px-4 space-y-2 mb-4">
+        <nav class="px-4 space-y-2 mb-4">
+            @if($isLecturer)
                 <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i><span>Dashboard</span>
+                    <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i>
+                    <span>Dashboard</span>
                 </a>
                 <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Kelola Materi</span>
+                    <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i>
+                    <span>Kelola Materi</span>
                 </a>
                 <a href="{{ route('lecturer.materials.create') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.create', 'lecturer.materials.edit') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-hammer w-6 text-center text-lg"></i><span>Buat Materi</span>
+                    <i class="fa-solid fa-hammer w-6 text-center text-lg"></i>
+                    <span>Buat Materi</span>
                 </a>
                 
+                {{-- Tambahan menu pretest dan kuis sesuai request lek --}}
                 <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i><span>Kelola Pretest</span>
+                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i>
+                    <span>Markas Pretest</span>
                 </a>
-
                 <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i><span>Bank Kuis</span>
+                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i>
+                    <span>Bank Kuis</span>
                 </a>
-                <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i><span>Progres Mahasiswa</span>
-                </a>
-            </nav>
-        </div>
 
-        <div class="p-4 border-t {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} shrink-0">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30 hover:text-red-500' : 'text-slate-500 hover:bg-red-50 hover:text-red-600' }} rounded-2xl font-bold text-sm w-full transition-all group">
-                    <i class="fa-solid fa-power-off w-6 text-center text-lg group-hover:rotate-90 transition-transform"></i><span>Keluar</span>
-                </button>
-            </form>
-        </div>
-    </aside>
+                <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i>
+                    <span>Laporan Mahasiswa</span>
+                </a>
+            @else
+                <a href="{{ route('student.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-border-all w-6 text-center text-lg"></i>
+                    <span>Beranda</span>
+                </a>
+                <a href="{{ route('student.material.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.material.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-book-open w-6 text-center text-lg"></i>
+                    <span>Kurikulum</span>
+                </a>
+                <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-clipboard-list w-6 text-center text-lg"></i>
+                    <span>Tugas Saya</span>
+                </a>
+                <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.progress.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-chart-line w-6 text-center text-lg"></i>
+                    <span>Laporan Progress</span>
+                </a>
+            @endif
+        </nav>
+    </div>
+
+    <div class="p-4 border-t {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} shrink-0">
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30 hover:text-red-500' : 'text-slate-500 hover:bg-red-50 hover:text-red-600' }} rounded-2xl font-bold text-sm w-full transition-all group">
+                <i class="fa-solid fa-power-off w-6 text-center text-lg group-hover:rotate-90 transition-transform"></i>
+                <span>Keluar </span>
+            </button>
+        </form>
+    </div>
+</aside>
 
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-100">
         <header class="h-20 flex justify-end items-center px-8 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur-md z-10">
@@ -111,24 +144,24 @@
                                     <span class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">{{ $index + 1 }}</span>
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Soal Pretest</span>
                                 </div>
-                                <h3 class="text-lg font-bold text-slate-800">{{ $item->question_text }}</h3>
+                                <h3 class="text-lg font-bold text-slate-800">{{ $item->question }}</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-[10px] font-bold">
-                                    <div class="{{ $item->correct_option == 'a' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">A: {{ $item->option_a }}</div>
-                                    <div class="{{ $item->correct_option == 'b' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">B: {{ $item->option_b }}</div>
-                                    <div class="{{ $item->correct_option == 'c' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">C: {{ $item->option_c }}</div>
-                                    <div class="{{ $item->correct_option == 'd' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">D: {{ $item->option_d }}</div>
+                                    <div class="{{ $item->correct_answer == 'a' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">A: {{ $item->option_a }}</div>
+                                    <div class="{{ $item->correct_answer == 'b' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">B: {{ $item->option_b }}</div>
+                                    <div class="{{ $item->correct_answer == 'c' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">C: {{ $item->option_c }}</div>
+                                    <div class="{{ $item->correct_answer == 'd' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400' }} p-2 rounded-lg border border-slate-100">D: {{ $item->option_d }}</div>
                                 </div>
                             </div>
                             <div class="flex space-x-2 mt-4 md:mt-0 md:ml-6">
                                 <button @click="
                                     editUrl = '{{ route('lecturer.pretest.update', $item->id) }}';
                                     editData = { 
-                                        question_text: '{{ addslashes($item->question_text) }}', 
+                                        question: '{{ addslashes($item->question) }}', 
                                         option_a: '{{ addslashes($item->option_a) }}', 
                                         option_b: '{{ addslashes($item->option_b) }}', 
                                         option_c: '{{ addslashes($item->option_c) }}', 
                                         option_d: '{{ addslashes($item->option_d) }}', 
-                                        correct_option: '{{ $item->correct_option }}' 
+                                        correct_answer: '{{ $item->correct_answer }}' 
                                     };
                                     showEditModal = true;
                                 " class="p-3 bg-amber-100 text-amber-700 rounded-xl hover:bg-amber-200 transition-colors">
@@ -161,7 +194,7 @@
                 <template x-if="showEditModal"><input type="hidden" name="_method" value="PUT"></template>
                 <div>
                     <label class="block text-xs font-black uppercase text-slate-500 mb-1">Pertanyaan</label>
-                    <textarea name="question_text" :value="showAddModal ? '' : editData.question_text" required class="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-300 outline-none" rows="3"></textarea>
+                    <textarea name="question" :value="showAddModal ? '' : editData.question" required class="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-300 outline-none" rows="3"></textarea>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach(['a','b','c','d'] as $opt)
@@ -176,7 +209,7 @@
                     <div class="flex justify-center space-x-4 mt-2">
                         @foreach(['a','b','c','d'] as $opt)
                         <label class="cursor-pointer group">
-                            <input type="radio" name="correct_option" value="{{ $opt }}" class="hidden peer" :checked="showAddModal ? '{{ $opt == 'a' }}' : editData.correct_option == '{{ $opt }}'">
+                            <input type="radio" name="correct_answer" value="{{ $opt }}" class="hidden peer" :checked="showAddModal ? '{{ $opt == 'a' }}' : editData.correct_answer == '{{ $opt }}'">
                             <div class="w-12 h-12 rounded-xl border-2 border-slate-100 flex items-center justify-center font-black uppercase text-slate-400 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 transition-all">{{ $opt }}</div>
                         </label>
                         @endforeach

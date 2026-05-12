@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Material;
 use App\Models\Quiz;
 use App\Models\QuizResult;
-use App\Models\Pretest;
+use App\Models\PretestQuestion;
 use Illuminate\Support\Facades\Storage;
 
 class LecturerController extends Controller
@@ -195,37 +195,41 @@ class LecturerController extends Controller
     // ==========================================
     // 4. BAGIAN KELOLA PRETEST
     // ==========================================
+    // ==========================================
+    // 4. BAGIAN KELOLA PRETEST
+    // ==========================================
     public function indexPretest()
     {
-        $pretests = \App\Models\Pretest::latest()->get();
+        // Narik datanya dari PretestQuestion, BUKAN Pretest!
+        $pretests = PretestQuestion::latest()->get();
         return view('lecturer.pretest.index', compact('pretests'));
     }
 
     public function storePretest(Request $request)
     {
         $request->validate([
-            'question_text' => 'required|string',
+            'question' => 'required|string',
             'option_a' => 'required|string',
             'option_b' => 'required|string',
             'option_c' => 'required|string',
             'option_d' => 'required|string',
-            'correct_option' => 'required|in:a,b,c,d',
+            'correct_answer' => 'required|in:a,b,c,d',
         ]);
 
-        \App\Models\Pretest::create($request->all());
+        PretestQuestion::create($request->all());
 
         return back()->with('success', 'Soal pretest berhasil ditambahkan, maba siap tersiksa!');
     }
 
-    public function updatePretest(Request $request, \App\Models\Pretest $pretest)
+    public function updatePretest(Request $request, PretestQuestion $pretest)
     {
         $request->validate([
-            'question_text' => 'required|string',
+            'question' => 'required|string',
             'option_a' => 'required|string',
             'option_b' => 'required|string',
             'option_c' => 'required|string',
             'option_d' => 'required|string',
-            'correct_option' => 'required|in:a,b,c,d',
+            'correct_answer' => 'required|in:a,b,c,d',
         ]);
 
         $pretest->update($request->all());
@@ -233,7 +237,7 @@ class LecturerController extends Controller
         return back()->with('success', 'Soal pretest berhasil di-update lek!');
     }
 
-    public function destroyPretest(\App\Models\Pretest $pretest)
+    public function destroyPretest(PretestQuestion $pretest)
     {
         $pretest->delete();
         return back()->with('success', 'Soal pretest berhasil dimusnahkan!');
