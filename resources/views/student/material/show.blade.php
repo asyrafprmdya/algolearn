@@ -1,12 +1,15 @@
 @extends('layouts.app')
 @section('content')
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ activeTab: 'video' }">
+<style>
+    @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: none; } }
+    .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+</style>
+
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ activeTab: 'video', showQuizModal: false, isSubmittingProgress: false }">
     
     @php
-        // Otak bunglon: ngecek yang login ini Dosen atau Mahasiswa
         $isLecturer = Auth::user()->role === 'lecturer'; 
         
-        // Ganti kulit otomatis
         $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
         $textMenu = $isLecturer ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]';
         $activeMenu = $isLecturer ? 'bg-amber-500 text-slate-900 shadow-[0_4px_0_0_#b45309]' : 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f]';
@@ -95,7 +98,7 @@
             <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
                 
                 <div class="w-full lg:w-3/4">
-                    <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
+                    <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px] animate-fade-in-up">
                         
                         <div class="flex border-b-2 border-slate-100 bg-slate-50 overflow-x-auto shrink-0 p-2 space-x-2">
                             <button @click="activeTab = 'video'" :class="activeTab === 'video' ? 'bg-white border-2 border-[#0b276b] text-[#0b276b] shadow-sm' : 'border-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200'" class="flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center space-x-2">
@@ -116,41 +119,45 @@
                             
                             <div x-show="activeTab === 'video'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="h-full flex flex-col">
                                 @if($material->video_url)
-                                <a href="{{ $material->video_url }}" target="_blank" class="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden relative shadow-inner flex flex-col items-center justify-center group cursor-pointer hover:bg-slate-800 transition-colors border-4 border-slate-800">
-                                    <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
-                                    <i class="fa-brands fa-youtube text-red-600 text-[6rem] group-hover:scale-110 group-hover:text-red-500 transition-all mb-4 drop-shadow-2xl relative z-10"></i>
-                                    <span class="text-white font-black tracking-widest uppercase text-sm relative z-10 bg-black/50 px-6 py-2 rounded-full border border-slate-700">Klik untuk Menonton di YouTube</span>
-                                </a>
+                                @php
+                                    $embedUrl = $material->video_url;
+                                    if (str_contains($embedUrl, 'watch?v=')) {
+                                        $embedUrl = str_replace('watch?v=', 'embed/', $embedUrl);
+                                        $embedUrl = explode('&', $embedUrl)[0];
+                                    } elseif (str_contains($embedUrl, 'youtu.be/')) {
+                                        $embedUrl = str_replace('youtu.be/', 'www.youtube.com/embed/', $embedUrl);
+                                        $embedUrl = explode('?', $embedUrl)[0];
+                                    }
+                                @endphp
+                                <div class="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden relative shadow-inner flex flex-col border-4 border-slate-800">
+                                    <iframe src="{{ $embedUrl }}" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
                                 @else
                                 <div class="w-full aspect-video bg-slate-50 border-4 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400">
                                     <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
                                         <i class="fa-solid fa-video-slash text-3xl"></i>
                                     </div>
-                                    <span class="font-black text-sm uppercase tracking-widest text-slate-500">GM belum ngasih link video.</span>
+                                    <span class="font-black text-sm uppercase tracking-widest text-slate-500">Video belum tersedia.</span>
                                 </div>
                                 @endif
-                                <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-xl">
-                                    <h2 class="text-sm font-black text-blue-900 uppercase tracking-widest mb-2 flex items-center space-x-2">
-                                        <i class="fa-solid fa-lightbulb text-blue-500"></i> <span>Tips Dosen</span>
-                                    </h2>
-                                    <p class="text-blue-700 text-sm font-bold leading-relaxed">Tonton video ini dulu biar otak lu ada gambaran. Setelah paham logikanya, baru hajar teorinya di tab Modul Teks.</p>
-                                </div>
                             </div>
 
                             <div x-show="activeTab === 'teks'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
-                                @php
-                                    $rawContent = $material->content ?? '';
-                                    $safeContent = strip_tags($rawContent, '<b><i><u><strong><em><br><p><ul><ol><li><h2><h3><h4>');
-                                    $safeContent = nl2br($safeContent);
-                                    $safeContent = str_replace('<h2>', '<h2 class="text-2xl font-black text-[#0b276b] border-b-2 border-slate-100 pb-3 mb-4 mt-8 uppercase tracking-tight">', $safeContent);
-                                    $safeContent = str_replace('<h3>', '<h3 class="text-xl font-bold text-slate-800 mb-3 mt-6">', $safeContent);
-                                    $safeContent = str_replace('<p>', '<p class="mb-4 text-slate-600 font-medium leading-loose text-justify">', $safeContent);
-                                    $safeContent = str_replace('<ul>', '<ul class="list-disc list-inside mb-6 space-y-2 text-slate-600 font-medium">', $safeContent);
-                                @endphp
-                                
-                                <article class="max-w-none">
-                                    {!! $safeContent ?: '<div class="text-center py-20"><i class="fa-solid fa-ghost text-6xl text-slate-200 mb-4"></i><p class="text-slate-400 font-black uppercase tracking-widest">Modul ini masih kosong.</p></div>' !!}
-                                </article>
+                                @if(!empty($material->pdf_path))
+                                <div>
+                                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center">
+                                        <i class="fa-solid fa-file-pdf text-red-500 mr-2 text-2xl"></i> Dokumen Modul Lengkap
+                                    </h3>
+                                    <div class="rounded-2xl overflow-hidden shadow-lg border-2 border-slate-200 bg-[#323639] w-full aspect-video relative">
+                                        <iframe src="{{ asset('storage/' . str_replace('public/', '', $material->pdf_path)) }}#view=Fit" class="w-full h-full" frameborder="0"></iframe>
+                                    </div>
+                                </div>
+                                @else
+                                <div class="text-center py-20">
+                                    <i class="fa-solid fa-file-circle-xmark text-6xl text-slate-200 mb-4"></i>
+                                    <p class="text-slate-400 font-black uppercase tracking-widest">GM belum ngasih file Modul PDF.</p>
+                                </div>
+                                @endif
                             </div>
 
                             <div x-show="activeTab === 'kode'" 
@@ -160,7 +167,7 @@
                                  style="display: none;" 
                                  class="h-full flex flex-col"
                                  x-data="{ 
-                                     rawCode: @js($material->code_visualization ?? '// GM lu kelupaan ngasih contoh kode. \n// Selamat ngulik di angan-angan!'),
+                                     rawCode: @js($material->code_visualization ?? 'Tidak ada kode visualisasi.'),
                                      displayedCode: '',
                                      isPlaying: false,
                                      isFinished: false,
@@ -170,7 +177,7 @@
                                          this.isFinished = false;
                                          this.displayedCode = '';
                                          let i = 0;
-                                         let speed = 25; // Kecepatan ngetik
+                                         let speed = 25;
                                          let interval = setInterval(() => {
                                              this.displayedCode += this.rawCode.charAt(i);
                                              i++;
@@ -219,49 +226,156 @@
 
                 <div class="w-full lg:w-1/4 space-y-6">
                     
-                    <div class="bg-[#0b276b] text-white rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-swords"></i>
-                        </div>
-                        <h3 class="font-black text-lg mb-2 relative z-10 uppercase tracking-tight text-amber-400">Quiz Terbuka</h3>
-                        <p class="text-blue-100 text-xs font-bold leading-relaxed mb-6 relative z-10">Karena lu udah buka materi ini, gembok kuis otomatis kebuka. Buktikan kalau kamu ngga cuma numpang lewat!</p>
-                        <a href="{{ route('student.tasks.index') }}" class="block w-full bg-amber-500 hover:bg-amber-600 text-slate-900 text-center font-black uppercase tracking-widest py-3 rounded-xl shadow-[0_4px_0_0_#b45309] hover:shadow-[0_2px_0_0_#b45309] hover:translate-y-[2px] transition-all relative z-10 text-xs">
-                            Kerjain Quiz
-                        </a>
+                    <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm text-center transition-all hover:border-indigo-300">
+                        @if($quiz && $quiz->questions->count() > 0)
+                            <h3 class="font-black text-slate-800 mb-2 uppercase tracking-tight">Evaluasi Tersedia</h3>
+                            <p class="text-xs font-bold text-slate-500 mb-5 leading-relaxed">Uji pemahaman lu buat nyelesaiin materi ini secara resmi.</p>
+                            <button @click="
+                                    isSubmittingProgress = true;
+                                    fetch('{{ route('student.material.complete', $material->id) }}', {
+                                        method: 'POST', 
+                                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                                    }).then(() => { 
+                                        isSubmittingProgress = false; 
+                                        showQuizModal = true; 
+                                    })
+                                " 
+                                :disabled="isSubmittingProgress"
+                                class="w-full py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#4f46e5] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 text-xs">
+                                <span x-show="!isSubmittingProgress"><i class="fa-solid fa-check-double mr-2"></i> Mulai Evaluasi</span>
+                                <span x-show="isSubmittingProgress"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading...</span>
+                            </button>
+                        @else
+                            <h3 class="font-black text-slate-800 mb-2 uppercase tracking-tight">Materi Selesai</h3>
+                            <p class="text-xs font-bold text-slate-500 mb-5 leading-relaxed">Tandai kelar kalau lu udah ngerasa paham semua isinya.</p>
+                            <button @click="
+                                    isSubmittingProgress = true;
+                                    fetch('{{ route('student.material.complete', $material->id) }}', {
+                                        method: 'POST', 
+                                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                                    }).then(() => { window.location.href = '{{ route('student.tasks.index') }}' })
+                                " 
+                                :disabled="isSubmittingProgress"
+                                class="w-full py-4 bg-emerald-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#059669] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
+                                <span x-show="!isSubmittingProgress"><i class="fa-solid fa-check mr-2"></i> Tandai Selesai</span>
+                                <span x-show="isSubmittingProgress"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading...</span>
+                            </button>
+                        @endif
                     </div>
 
-                    @if($material->pdf_path)
-                    <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-400 transition-all">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl group-hover:scale-110 group-hover:-rotate-12 transition-all">
-                            <i class="fa-solid fa-scroll"></i>
-                        </div>
-                        <h3 class="font-black text-blue-900 mb-2 relative z-10 flex items-center space-x-2 uppercase tracking-tight">
-                            <i class="fa-solid fa-file-pdf text-red-500 text-xl"></i>
-                            <span>Dokumen Materi</span>
+                    @if(!empty($material->pdf_path))
+                    <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm hover:border-red-300 transition-colors">
+                        <h3 class="font-black text-slate-800 mb-3 flex items-center space-x-2 uppercase tracking-tight">
+                            <i class="fa-solid fa-download text-red-500"></i>
+                            <span>Modul Offline</span>
                         </h3>
-                        <p class="text-blue-700 text-xs font-bold mb-6 relative z-10 leading-relaxed">Dosen ngasih materi versi PDF. Download biar bisa dibaca pas kuota sekarat.</p>
-                        
-                        <a href="{{ asset('storage/' . $material->pdf_path) }}" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-black uppercase tracking-widest py-3 rounded-xl shadow-[0_4px_0_0_#1e3a8a] hover:shadow-[0_2px_0_0_#1e3a8a] hover:translate-y-[2px] transition-all relative z-10 text-xs flex items-center justify-center">
-                            <i class="fa-solid fa-download mr-2"></i> Unduh PDF
+                        <p class="text-xs font-bold text-slate-500 mb-6 leading-relaxed">Fakir kuota? Download aja PDF-nya biar bisa dibaca pas nongkrong kaga pake wifi.</p>
+                        <a href="{{ asset('storage/' . str_replace('public/', '', $material->pdf_path)) }}" download class="block w-full border-2 border-slate-200 text-slate-500 hover:border-red-500 hover:bg-red-50 hover:text-red-700 text-center font-black uppercase tracking-widest py-3 rounded-xl transition-all text-xs">
+                            Download PDF
                         </a>
                     </div>
                     @endif
-
-                    <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm hover:border-emerald-300 transition-colors">
-                        <h3 class="font-black text-slate-800 mb-3 flex items-center space-x-2 uppercase tracking-tight">
-                            <i class="fa-solid fa-comments text-emerald-500"></i>
-                            <span>Ruang Curhat</span>
-                        </h3>
-                        <p class="text-xs font-bold text-slate-500 mb-6 leading-relaxed">Ada kodingan yang bikin otak lu ngebul? Tanya aja di forum, jangan dipendam sendiri entar stres.</p>
-                        <button class="w-full border-2 border-slate-200 text-slate-500 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 font-black uppercase tracking-widest py-3 rounded-xl transition-all text-xs">
-                            Buka Forum
-                        </button>
-                    </div>
 
                 </div>
 
             </div>
         </div>
+
+        @if($quiz && $quiz->questions->count() > 0)
+        <div x-show="showQuizModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-md" style="display: none;" x-transition>
+            <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl border-4 border-indigo-500" @click.away="alert('Selesaikan evaluasi terlebih dahulu!')">
+                
+                <div class="px-8 py-6 border-b-2 border-slate-100 bg-indigo-50 flex justify-between items-center shrink-0">
+                    <div>
+                        <h3 class="text-2xl font-black text-indigo-900 uppercase tracking-tight">Evaluasi Kilat</h3>
+                        <p class="text-xs font-bold text-indigo-600 mt-1">Selesaikan ini buat buktiin lu beneran baca!</p>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xl font-black shadow-lg">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                </div>
+
+                <div class="p-8 overflow-y-auto flex-1 bg-slate-50 custom-scrollbar">
+                    <form action="{{ route('student.quiz.evaluasi.submit', $quiz->id) }}" method="POST" id="evalForm">
+                        @csrf
+                        <div class="space-y-6">
+                            @foreach($quiz->questions as $index => $q)
+                                @php
+                                    $parsedText = e($q->question_text);
+                                    $parsedText = nl2br($parsedText);
+                                    $parsedText = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
+                                        $cleanCode = str_replace('<br />', '', $matches[1]);
+                                        return '<pre class="bg-[#0f172a] text-emerald-400 p-5 rounded-2xl my-4 overflow-x-auto font-mono text-sm shadow-inner border-2 border-slate-800"><code>' . trim($cleanCode) . '</code></pre>';
+                                    }, $parsedText);
+                                @endphp
+
+                                @if($q->type == 'arrange')
+                                    <div class="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:border-indigo-200 transition-colors"
+                                         x-data="{
+                                            available: @js(explode(',', $q->options)),
+                                            selected: [],
+                                            moveToSelected(i) {
+                                                this.selected.push(this.available[i]);
+                                                this.available.splice(i, 1);
+                                            },
+                                            moveToAvailable(i) {
+                                                this.available.push(this.selected[i]);
+                                                this.selected.splice(i, 1);
+                                            }
+                                         }">
+                                        <h4 class="font-bold text-slate-800 mb-5 leading-relaxed">
+                                            <span class="text-indigo-500 mr-2">{{ $index + 1 }}.</span> {!! $parsedText !!}
+                                        </h4>
+                                        <div class="min-h-[80px] p-4 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 mb-6 flex flex-wrap gap-2 items-center">
+                                            <template x-if="selected.length === 0">
+                                                <span class="text-slate-400 text-xs font-bold w-full text-center">Tap blok di bawah buat nyusun...</span>
+                                            </template>
+                                            <template x-for="(block, i) in selected" :key="i">
+                                                <button @click="moveToAvailable(i)" type="button" class="px-4 py-2 bg-indigo-600 text-white font-mono text-xs rounded-lg shadow-[0_3px_0_0_#4338ca] active:translate-y-[3px] active:shadow-none transition-all">
+                                                    <span x-text="block"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <div class="p-4 rounded-xl bg-slate-100 flex flex-wrap gap-2 justify-center">
+                                            <template x-for="(block, i) in available" :key="i">
+                                                <button @click="moveToSelected(i)" type="button" class="px-4 py-2 bg-white text-slate-700 font-mono text-xs rounded-lg border-2 border-slate-200 shadow-[0_3px_0_0_#cbd5e1] active:translate-y-[3px] active:shadow-none transition-all">
+                                                    <span x-text="block"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <input type="hidden" name="answers[{{ $q->id }}]" :value="selected.join(' ')">
+                                    </div>
+                                @else
+                                    <div class="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:border-indigo-200 transition-colors">
+                                        <h4 class="font-bold text-slate-800 mb-5 leading-relaxed"><span class="text-indigo-500 mr-2">{{ $index + 1 }}.</span> {!! $parsedText !!}</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            @foreach(['a','b','c','d'] as $opt)
+                                            <label class="cursor-pointer group">
+                                                <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer" required>
+                                                <div class="p-4 rounded-xl border-2 border-slate-100 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 text-slate-600 peer-checked:text-indigo-800 font-medium transition-all flex items-center">
+                                                    <span class="inline-flex w-8 h-8 bg-slate-100 text-slate-500 peer-checked:bg-indigo-500 peer-checked:text-white rounded-lg items-center justify-center text-xs font-black mr-3 uppercase shrink-0 transition-colors">{{ $opt }}</span>
+                                                    <span class="text-sm">{{ $q->{'option_'.$opt} }}</span>
+                                                </div>
+                                            </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </form>
+                </div>
+
+                <div class="px-8 py-6 border-t-2 border-slate-100 bg-white shrink-0">
+                    <button type="button" onclick="document.getElementById('evalForm').submit()" class="w-full py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#4f46e5] hover:translate-y-[2px] hover:shadow-none transition-all">
+                        Kumpulkan Evaluasi
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        @endif
+        
     </main>
 </div>
 @endsection

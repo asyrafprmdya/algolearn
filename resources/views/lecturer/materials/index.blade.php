@@ -1,15 +1,18 @@
 @extends('layouts.app')
 @section('content')
+<style>
+    @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: none; } }
+    .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+</style>
+
 <div class="flex h-screen bg-slate-50 overflow-hidden">
     @php
-    // Otak bunglon: ngecek yang login ini Dosen atau Mahasiswa
-    $isLecturer = Auth::user()->role === 'lecturer'; 
-    
-    // Ganti kulit otomatis
-    $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
-    $textMenu = $isLecturer ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]';
-    $activeMenu = $isLecturer ? 'bg-amber-500 text-slate-900 shadow-[0_4px_0_0_#b45309]' : 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f]';
-@endphp
+        $isLecturer = Auth::user()->role === 'lecturer'; 
+        
+        $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
+        $textMenu = $isLecturer ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]';
+        $activeMenu = $isLecturer ? 'bg-amber-500 text-slate-900 shadow-[0_4px_0_0_#b45309]' : 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f]';
+    @endphp
 
 <aside class="w-64 {{ $bgSidebar }} border-r flex flex-col justify-between hidden md:flex shrink-0 z-20">
     <div class="flex-1 overflow-y-auto">
@@ -48,8 +51,6 @@
                     <i class="fa-solid fa-hammer w-6 text-center text-lg"></i>
                     <span>Buat Materi</span>
                 </a>
-                
-                {{-- Tambahan menu pretest dan kuis sesuai request lek --}}
                 <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                     <i class="fa-solid fa-scroll w-6 text-center text-lg"></i>
                     <span>Markas Pretest</span>
@@ -58,7 +59,6 @@
                     <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i>
                     <span>Bank Kuis</span>
                 </a>
-
                 <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                     <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i>
                     <span>Laporan Mahasiswa</span>
@@ -96,25 +96,25 @@
 </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-20 flex justify-between items-center px-8 shrink-0 border-b bg-white/80 backdrop-blur-md">
+        <header class="h-20 flex justify-between items-center px-8 shrink-0 border-b bg-white/80 backdrop-blur-md z-10">
             <h1 class="text-xl font-black text-slate-800 uppercase">Kelola Materi</h1>
             <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white font-black">{{ substr(Auth::user()->name, 0, 1) }}</div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-6xl mx-auto">
+        <div class="flex-1 overflow-y-auto p-8 relative">
+            <div class="max-w-6xl mx-auto animate-fade-in-up">
                 <div class="flex justify-between items-center mb-8">
                     <div>
                         <h2 class="text-3xl font-black text-slate-800 uppercase tracking-tight">Daftar Materi</h2>
-                        <p class="text-slate-500 font-medium text-sm">Total: {{ $materials->count() }} Materi Terdeteksi.</p>
+                        <p class="text-slate-500 font-medium text-sm mt-1">Total: {{ $materials->count() }} Materi Terdeteksi.</p>
                     </div>
-                    <a href="{{ route('lecturer.materials.create') }}" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-3 px-6 rounded-xl shadow-[0_4px_0_0_#b45309] hover:translate-y-[2px] transition-all flex items-center space-x-2">
-                        <i class="fa-solid fa-plus"></i>
+                    <a href="{{ route('lecturer.materials.create') }}" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-3 px-6 rounded-xl shadow-[0_4px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#b45309] transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-plus text-lg"></i>
                         <span>Tambah Materi</span>
                     </a>
                 </div>
 
-                <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-slate-900 text-slate-300 text-xs uppercase tracking-widest">
                             <tr>
@@ -125,23 +125,43 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm font-bold text-slate-700">
-                            @foreach($materials as $material)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-6 py-4">{{ $material->title }}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-3 py-1 rounded-md text-[10px] {{ $material->level == 'Lanjutan' ? 'bg-emerald-100 text-emerald-700' : ($material->level == 'Menengah' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600') }}">
+                            @forelse($materials as $material)
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-5">{{ $material->title }}</td>
+                                <td class="px-6 py-5">
+                                    <span class="px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest shadow-sm {{ $material->level == 'Lanjutan' ? 'bg-purple-100 text-purple-700 border border-purple-200' : ($material->level == 'Menengah' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200') }}">
                                         {{ $material->level }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    {!! $material->is_published ? '<span class="text-emerald-500"><i class="fa-solid fa-circle-check"></i> Live</span>' : '<span class="text-slate-400 italic">Draft</span>' !!}
+                                <td class="px-6 py-5 text-center">
+                                    {!! $material->is_published ? '<span class="text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest border border-emerald-100"><i class="fa-solid fa-circle-check mr-1"></i> Live</span>' : '<span class="text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest border border-slate-200"><i class="fa-solid fa-file-lines mr-1"></i> Draft</span>' !!}
                                 </td>
-                                <td class="px-6 py-4 text-right flex justify-end space-x-3">
-                                    <a href="{{ route('lecturer.materials.edit', $material->id) }}" class="text-amber-500 hover:text-amber-700"><i class="fa-solid fa-pen-to-square"></i></a>
-                                    <a href="{{ route('lecturer.quiz.create', $material->id) }}" class="text-blue-500 hover:text-blue-700" title="Kelola Kuis"><i class="fa-solid fa-clipboard-question"></i></a>
+                                <td class="px-6 py-5 text-right">
+                                    <div class="flex justify-end items-center space-x-4">
+                                        <a href="{{ route('lecturer.materials.edit', $material->id) }}" class="text-amber-500 hover:text-amber-600 hover:scale-110 transition-all" title="Edit Materi">
+                                            <i class="fa-solid fa-pen-to-square text-lg"></i>
+                                        </a>
+                                        <a href="{{ route('lecturer.quiz.create', $material->id) }}" class="text-blue-500 hover:text-blue-600 hover:scale-110 transition-all" title="Kelola Kuis">
+                                            <i class="fa-solid fa-clipboard-question text-lg"></i>
+                                        </a>
+                                        <form action="{{ route('lecturer.materials.destroy', $material->id) }}" method="POST" onsubmit="return confirm('Yakin mau musnahin materi ini beserta seluruh kuisnya?')" class="inline-block m-0 p-0">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-slate-400 hover:text-red-500 hover:scale-110 transition-all" title="Hapus Materi">
+                                                <i class="fa-solid fa-trash text-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold">
+                                    <i class="fa-solid fa-ghost text-4xl mb-3"></i>
+                                    <p>Belum ada materi yang dibikin. Santai amat jadi dosen!</p>
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>

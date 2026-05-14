@@ -22,7 +22,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="px-6 mb-8 mt-2">
                 <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Status Level Kamu</p>
                 <div class="inline-block animate-pulse-soft">
@@ -31,30 +30,25 @@
                     </p>
                 </div>
             </div>
-
             <nav class="px-4 space-y-2 mb-4">
                 <a href="{{ route('student.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.dashboard') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-border-all w-6 text-center text-lg {{ request()->routeIs('student.dashboard') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                     <span>Beranda</span>
                 </a>
-                
                 <a href="{{ route('student.material.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.material.*') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-book-open w-6 text-center text-lg {{ request()->routeIs('student.material.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                     <span>Materi</span>
                 </a>
-                
                 <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-clipboard-list w-6 text-center text-lg {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                     <span>Latihan</span>
                 </a>
-                
                 <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.progress.index') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-chart-line w-6 text-center text-lg {{ request()->routeIs('student.progress.index') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                     <span>Laporan Progres</span>
                 </a>
             </nav>
         </div>
-
         <div class="p-4 border-t-2 border-slate-100 space-y-1 bg-white shrink-0">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
@@ -76,36 +70,55 @@
 
         <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
             <div class="max-w-xl mx-auto relative pb-32">
-                
                 @php
+                    $userLevelStr = strtolower(Auth::user()->level ?? 'pemula');
+                    $userRank = 1;
+                    if (str_contains($userLevelStr, 'menengah')) $userRank = 2;
+                    if (str_contains($userLevelStr, 'lanjutan')) $userRank = 3;
+
                     $sections = [
-                        'Pemula' => ['color' => 'emerald', 'bg' => 'bg-emerald-500', 'border' => 'border-emerald-700', 'icon' => 'fa-seedling'],
-                        'Menengah' => ['color' => 'blue', 'bg' => 'bg-blue-500', 'border' => 'border-blue-700', 'icon' => 'fa-fire'],
-                        'Lanjutan' => ['color' => 'purple', 'bg' => 'bg-purple-500', 'border' => 'border-purple-700', 'icon' => 'fa-crown']
+                        'Pemula' => ['color' => 'emerald', 'bg' => 'bg-emerald-500', 'border' => 'border-emerald-700', 'icon' => 'fa-seedling', 'rank' => 1],
+                        'Menengah' => ['color' => 'blue', 'bg' => 'bg-blue-500', 'border' => 'border-blue-700', 'icon' => 'fa-fire', 'rank' => 2],
+                        'Lanjutan' => ['color' => 'purple', 'bg' => 'bg-purple-500', 'border' => 'border-purple-700', 'icon' => 'fa-crown', 'rank' => 3]
                     ];
-                    $canUnlockNext = true;
+                    
+                    $canUnlockNextNode = true; 
                 @endphp
 
                 @foreach($sections as $levelName => $theme)
+                    @php
+                        $isSectionLocked = $theme['rank'] > $userRank;
+                        $headerBg = $isSectionLocked ? 'bg-slate-400' : $theme['bg'];
+                        $headerBorder = $isSectionLocked ? 'border-slate-500' : $theme['border'];
+                        $headerIcon = $isSectionLocked ? 'fa-lock' : $theme['icon'];
+                    @endphp
+
                     <div class="mb-24 relative">
                         <div class="text-center mb-16 relative z-10">
-                            <span class="px-8 py-3 {{ $theme['bg'] }} text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-sm border-b-4 {{ $theme['border'] }}">
-                                <i class="fa-solid {{ $theme['icon'] }} mr-2"></i> Unit: {{ $levelName }}
+                            <span class="px-8 py-3 {{ $headerBg }} text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-sm border-b-4 {{ $headerBorder }} {{ $isSectionLocked ? 'opacity-70' : '' }}">
+                                <i class="fa-solid {{ $headerIcon }} mr-2"></i> Unit: {{ $levelName }}
                             </span>
                         </div>
 
                         <div class="relative flex flex-col items-center space-y-16">
                             @php 
                                 $units = $materials[$levelName] ?? collect([]);
-                                $levelClear = true;
                             @endphp
 
                             @forelse($units as $index => $unit)
                                 @php
-                                    $isDone = in_array($unit->id, $completedMaterialIds ?? []);
-                                    if(!$isDone) $levelClear = false;
-                                    $isLocked = !$canUnlockNext;
+                                    $completedArray = is_array($completedMaterialIds) ? $completedMaterialIds : [];
+                                    $isDone = in_array($unit->id, $completedArray);
+                                    
+                                    $isLocked = $isSectionLocked || !$canUnlockNextNode;
+                                    
+                                    if (!$isDone) {
+                                        $canUnlockNextNode = false;
+                                    }
+
                                     $zigzag = ($index % 2 == 0) ? 'mr-24' : 'ml-24';
+                                    
+                                    $quiz = $unit->quizzes->first();
                                 @endphp
 
                                 <div class="relative z-10 {{ $zigzag }}">
@@ -115,11 +128,17 @@
                                         </div>
                                     @else
                                         <div class="relative">
-                                            <a href="{{ route('student.quiz.show', $unit->id) }}" 
-                                               class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all
-                                               {{ $isDone ? 'bg-emerald-500 border-emerald-700' : $theme['bg'].' '.$theme['border'] }}">
-                                                <i class="fa-solid {{ $isDone ? 'fa-check' : 'fa-star' }} text-white text-3xl"></i>
-                                            </a>
+                                            @if($quiz)
+                                                <a href="{{ route('student.quiz.show', $quiz->id) }}" 
+                                                   class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all
+                                                   {{ $isDone ? 'bg-emerald-500 border-emerald-700' : $theme['bg'].' '.$theme['border'] }}">
+                                                    <i class="fa-solid {{ $isDone ? 'fa-check' : 'fa-star' }} text-white text-3xl"></i>
+                                                </a>
+                                            @else
+                                                <div class="level-node w-24 h-24 bg-slate-300 rounded-full border-b-8 border-slate-400 flex items-center justify-center shadow-lg cursor-not-allowed" onclick="alert('Sabar lek! GM belum nyiapin kuis buat materi ini.')">
+                                                    <i class="fa-solid fa-person-digging text-slate-500 text-3xl"></i>
+                                                </div>
+                                            @endif
                                             <div class="absolute top-1/2 {{ ($index % 2 == 0) ? 'left-full ml-6' : 'right-full mr-6' }} -translate-y-1/2 bg-white px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-sm whitespace-nowrap">
                                                 <p class="text-sm font-black text-slate-800">{{ $unit->title }}</p>
                                                 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1">
@@ -138,7 +157,6 @@
                             @endif
                         </div>
                     </div>
-                    @php $canUnlockNext = $levelClear; @endphp
                 @endforeach
             </div>
         </div>

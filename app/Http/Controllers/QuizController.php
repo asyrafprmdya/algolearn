@@ -25,8 +25,16 @@ class QuizController extends Controller
         $totalQuestions = $quiz->questions->count();
 
         foreach ($quiz->questions as $question) {
-            if (isset($answers[$question->id]) && $answers[$question->id] == $question->correct_option) {
-                $correctCount++;
+            $userAnswer = $answers[$question->id] ?? '';
+            
+            if ($question->type == 'arrange') {
+                if (trim($userAnswer) === trim($question->correct_option)) {
+                    $correctCount++;
+                }
+            } else {
+                if ($userAnswer == $question->correct_option) {
+                    $correctCount++;
+                }
             }
         }
 
@@ -41,16 +49,15 @@ class QuizController extends Controller
 
         if ($isPassed) {
             $currentLevel = strtolower($user->getLevel());
-            $quizLevel = strtolower($quiz->material->level);
+            $quizLevel = strtolower($quiz->material->level ?? '');
 
             if ($currentLevel === $quizLevel) {
-                $passedCount = \App\Models\QuizResult::with('quiz.material')
+                $passedCount = QuizResult::with('quiz.material')
                     ->where('user_id', $user->id)
                     ->get()
                     ->filter(function ($result) use ($currentLevel) {
                         $matLevel = strtolower($result->quiz->material->level ?? '');
                         $isLulus = $result->score >= ($result->quiz->passing_grade ?? 70);
-                        
                         return $matLevel === $currentLevel && $isLulus;
                     })
                     ->count();
@@ -69,21 +76,6 @@ class QuizController extends Controller
         ]);
     }
 
-    public function result(Quiz $quiz)
-    {
-        $answers = session('answers');
-        $score = session('score');
-
-        // Kalau mahasiswanya maksa akses URL result tapi belum ngerjain, tendang ke daftar tugas
-        if ($answers === null) {
-            return redirect()->route('student.tasks.index');
-        }
-
-        $quiz->load('questions');
-        return view('student.quizzes.result', compact('quiz', 'answers', 'score'));
-    }
-
-    // FUNGSI KHUSUS EVALUASI DADAKAN (SILENT KILL)
     public function submitEvaluasi(Request $request, Quiz $quiz)
     {
         $user = Auth::user();
@@ -94,27 +86,33 @@ class QuizController extends Controller
         $totalQuestions = $quiz->questions->count();
 
         foreach ($quiz->questions as $question) {
-            if (isset($answers[$question->id]) && $answers[$question->id] == $question->correct_option) {
-                $correctCount++;
+            $userAnswer = $answers[$question->id] ?? '';
+            
+            if ($question->type == 'arrange') {
+                if (trim($userAnswer) === trim($question->correct_option)) {
+                    $correctCount++;
+                }
+            } else {
+                if ($userAnswer == $question->correct_option) {
+                    $correctCount++;
+                }
             }
         }
 
         $score = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
 
-        // Catat skor ke database diem-diem
         QuizResult::updateOrCreate(
             ['user_id' => $user->id, 'quiz_id' => $quiz->id],
             ['score' => $score]
         );
 
-        // Copas logik Level Up lu biar maba tetep dapet EXP
         $isPassed = $score >= $quiz->passing_grade;
         if ($isPassed) {
             $currentLevel = strtolower($user->getLevel());
-            $quizLevel = strtolower($quiz->material->level);
+            $quizLevel = strtolower($quiz->material->level ?? '');
 
             if ($currentLevel === $quizLevel) {
-                $passedCount = \App\Models\QuizResult::with('quiz.material')
+                $passedCount = QuizResult::with('quiz.material')
                     ->where('user_id', $user->id)
                     ->get()
                     ->filter(function ($result) use ($currentLevel) {
@@ -131,6 +129,20 @@ class QuizController extends Controller
                 }
             }
         }
-        return redirect()->route('student.tasks.index')->with('success', 'Evaluasi Rahasia Kelar! Skor lu udah diamankan GM.');
+
+        return redirect()->route('student.tasks.index');
+    }
+
+    public function result(Quiz $quiz)
+    {
+        $answers = session('answers');
+        $score = session('score');
+
+        if ($answers === null) {
+            return redirect()->route('student.tasks.index');
+        }
+
+        $quiz->load('questions');
+        return view('student.quizzes.result', compact('quiz', 'answers', 'score'));
     }
 }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Material;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
@@ -22,39 +21,37 @@ class StudentController extends Controller
     {
         $user = Auth::user();
         
-        $materials = Material::orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")
-                    ->get()
-                    ->groupBy('level');
+        $materials = Material::with(['quizzes' => function($query) {
+                    $query->where('category', 'practice');
+                }])
+                ->orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")
+                ->get()
+                ->groupBy('level');
 
         $completedMaterialIds = is_array($user->completed_contents) ? $user->completed_contents : [];
 
         return view('student.tasks.index', compact('materials', 'completedMaterialIds'));
     }
 
-    public function showMaterial(\App\Models\Material $material)
+    public function showMaterial(Material $material)
     {
-
-        $material->load(['quizzes.questions']);
+        $material->load(['quizzes' => function($query) {
+            $query->where('category', 'evaluation')->with('questions');
+        }]);
         $quiz = $material->quizzes->first();
-        
         return view('student.material.show', compact('material', 'quiz'));
     }
 
-    public function completeMaterial(\App\Models\Material $material)
-{
-    $user = auth()->user();
-    
-    // Ambil data lama, kalau masih null jadiin array kosong
-    $completed = is_array($user->completed_contents) ? $user->completed_contents : [];
+    public function completeMaterial(Material $material)
+    {
+        $user = Auth::user();
+        $completed = is_array($user->completed_contents) ? $user->completed_contents : [];
 
-    // Kalau ID materi ini belum ada di daftar "insaf", kita masukin
-    if (!in_array($material->id, $completed)) {
-        $completed[] = $material->id;
-        $user->update([
-            'completed_contents' => $completed
-        ]);
+        if (!in_array($material->id, $completed)) {
+            $completed[] = $material->id;
+            $user->update(['completed_contents' => $completed]);
+        }
+
+        return response()->json(['status' => 'success']);
     }
-
-    return response()->json(['status' => 'success', 'message' => 'Misi kelar lek!']);
-}
 }

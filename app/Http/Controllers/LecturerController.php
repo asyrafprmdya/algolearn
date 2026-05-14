@@ -6,15 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Material;
 use App\Models\Quiz;
+use App\Models\Question;
 use App\Models\QuizResult;
 use App\Models\PretestQuestion;
 use Illuminate\Support\Facades\Storage;
 
 class LecturerController extends Controller
 {
-    // ==========================================
-    // 1. BAGIAN DASHBOARD & LAPORAN
-    // ==========================================
     public function dashboard()
     {
         $totalStudents = User::where('role', 'student')->count();
@@ -31,10 +29,6 @@ class LecturerController extends Controller
         return view('lecturer.progress', compact('students'));
     }
 
-
-    // ==========================================
-    // 2. BAGIAN KELOLA MATERI (PABRIK QUEST)
-    // ==========================================
     public function indexMaterial()
     {
         $materials = Material::orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")->get(); 
@@ -100,10 +94,25 @@ class LecturerController extends Controller
         return redirect()->route('lecturer.materials.index');
     }
 
+    public function destroyMaterial(Material $material)
+    {
+        if ($material->pdf_path) {
+            Storage::disk('public')->delete($material->pdf_path);
+        }
 
-    // ==========================================
-    // 3. BAGIAN KELOLA KUIS (BANK KUIS)
-    // ==========================================
+        $quizzes = Quiz::where('material_id', $material->id)->get();
+        
+        foreach ($quizzes as $quiz) {
+            QuizResult::where('quiz_id', $quiz->id)->delete();
+            $quiz->questions()->delete();
+            $quiz->delete();
+        }
+
+        $material->delete();
+
+        return redirect()->route('lecturer.materials.index');
+    }
+
     public function indexQuiz()
     {
         $materials = Material::with('quizzes')
@@ -120,28 +129,32 @@ class LecturerController extends Controller
 
     public function storeQuiz(Request $request, Material $material)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'passing_grade' => 'required|integer|min:0|max:100',
-            'questions' => 'required|array|min:1',
-            'questions.*.question_text' => 'required|string',
-            'questions.*.option_a' => 'required|string',
-            'questions.*.option_b' => 'required|string',
-            'questions.*.option_c' => 'required|string',
-            'questions.*.option_d' => 'required|string',
-            'questions.*.correct_option' => 'required|in:a,b,c,d',
-        ]);
-
-        $quiz = $material->quizzes()->create([
+        $quiz = Quiz::create([
+            'material_id' => $material->id,
             'title' => $request->title,
+            'category' => $request->category ?? 'practice',
             'passing_grade' => $request->passing_grade,
         ]);
 
-        foreach ($request->questions as $q) {
-            $quiz->questions()->create($q);
+        if ($request->has('questions')) {
+            foreach ($request->questions as $q) {
+                $isArrange = isset($q['type']) && $q['type'] === 'arrange';
+
+                Question::create([
+                    'quiz_id' => $quiz->id,
+                    'question_text' => $q['question_text'],
+                    'type' => $q['type'] ?? 'multiple_choice',
+                    'option_a' => $isArrange ? '-' : ($q['option_a'] ?? '-'),
+                    'option_b' => $isArrange ? '-' : ($q['option_b'] ?? '-'),
+                    'option_c' => $isArrange ? '-' : ($q['option_c'] ?? '-'),
+                    'option_d' => $isArrange ? '-' : ($q['option_d'] ?? '-'),
+                    'options' => $isArrange ? ($q['options_arrange'] ?? null) : null,
+                    'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? null),
+                ]);
+            }
         }
 
-        return redirect()->route('lecturer.quiz.index');
+        return redirect()->route('lecturer.materials.index');
     }
 
     public function showQuiz(Quiz $quiz)
@@ -164,11 +177,6 @@ class LecturerController extends Controller
             'passing_grade' => 'required|integer|min:0|max:100',
             'questions' => 'required|array|min:1',
             'questions.*.question_text' => 'required|string',
-            'questions.*.option_a' => 'required|string',
-            'questions.*.option_b' => 'required|string',
-            'questions.*.option_c' => 'required|string',
-            'questions.*.option_d' => 'required|string',
-            'questions.*.correct_option' => 'required|in:a,b,c,d',
         ]);
 
         $quiz->update([
@@ -177,8 +185,21 @@ class LecturerController extends Controller
         ]);
 
         $quiz->questions()->delete();
+        
         foreach ($request->questions as $q) {
-            $quiz->questions()->create($q);
+            $isArrange = isset($q['type']) && $q['type'] === 'arrange';
+
+            Question::create([
+                'quiz_id' => $quiz->id,
+                'question_text' => $q['question_text'],
+                'type' => $q['type'] ?? 'multiple_choice',
+                'option_a' => $isArrange ? '-' : ($q['option_a'] ?? '-'),
+                'option_b' => $isArrange ? '-' : ($q['option_b'] ?? '-'),
+                'option_c' => $isArrange ? '-' : ($q['option_c'] ?? '-'),
+                'option_d' => $isArrange ? '-' : ($q['option_d'] ?? '-'),
+                'options' => $isArrange ? ($q['options_arrange'] ?? null) : null,
+                'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? null),
+            ]);
         }
 
         return redirect()->route('lecturer.quiz.index');
@@ -186,21 +207,15 @@ class LecturerController extends Controller
 
     public function destroyQuiz(Quiz $quiz)
     {
+        QuizResult::where('quiz_id', $quiz->id)->delete();
         $quiz->questions()->delete(); 
         $quiz->delete();
         
-        return redirect()->route('lecturer.quiz.index');
+        return redirect()->back();
     }
 
-    // ==========================================
-    // 4. BAGIAN KELOLA PRETEST
-    // ==========================================
-    // ==========================================
-    // 4. BAGIAN KELOLA PRETEST
-    // ==========================================
     public function indexPretest()
     {
-        // Narik datanya dari PretestQuestion, BUKAN Pretest!
         $pretests = PretestQuestion::latest()->get();
         return view('lecturer.pretest.index', compact('pretests'));
     }
@@ -218,7 +233,7 @@ class LecturerController extends Controller
 
         PretestQuestion::create($request->all());
 
-        return back()->with('success', 'Soal pretest berhasil ditambahkan, maba siap tersiksa!');
+        return back();
     }
 
     public function updatePretest(Request $request, PretestQuestion $pretest)
@@ -234,12 +249,12 @@ class LecturerController extends Controller
 
         $pretest->update($request->all());
 
-        return back()->with('success', 'Soal pretest berhasil di-update lek!');
+        return back();
     }
 
     public function destroyPretest(PretestQuestion $pretest)
     {
         $pretest->delete();
-        return back()->with('success', 'Soal pretest berhasil dimusnahkan!');
+        return back();
     }
 }
