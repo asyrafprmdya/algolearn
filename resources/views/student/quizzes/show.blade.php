@@ -1,36 +1,49 @@
 @extends('layouts.app')
 @section('content')
-<div class="min-h-screen bg-slate-50 pb-20">
-    <header class="bg-white border-b border-slate-200 px-8 py-6 sticky top-0 z-50 flex items-center justify-between shadow-sm">
-        <div class="flex items-center gap-4">
-            <a href="{{ route('student.tasks.index') }}" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-            <div>
-                <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Arena Kuis</p>
-                <h1 class="text-xl font-black text-slate-800 uppercase tracking-tight">{{ $quiz->title }}</h1>
+<div class="h-screen flex flex-col bg-white overflow-hidden" x-data="{
+        currentIndex: 0,
+        totalQuestions: {{ $quiz->questions->count() }},
+        progress() {
+            return ((this.currentIndex + 1) / this.totalQuestions) * 100;
+        }
+    }">
+    
+    <header class="w-full px-6 py-8 flex items-center justify-between max-w-5xl mx-auto gap-6 shrink-0 z-50 bg-white">
+        <a href="{{ route('student.tasks.index') }}" class="text-slate-300 hover:text-slate-500 transition-colors active:scale-90">
+            <i class="fa-solid fa-xmark text-3xl"></i>
+        </a>
+        <div class="flex-1 h-5 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out relative" :style="'width: ' + progress() + '%'">
+                <div class="absolute top-1 left-2 right-2 h-1.5 bg-white/30 rounded-full"></div>
             </div>
         </div>
+        <div class="font-black text-emerald-500 text-lg w-12 text-center" x-text="(currentIndex + 1) + '/' + totalQuestions"></div>
     </header>
 
-    <main class="max-w-4xl mx-auto mt-10 px-4">
-        <form action="{{ route('student.quiz.submit', $quiz->id) }}" method="POST">
-            @csrf
-            <div class="space-y-8">
+    <form action="{{ route('student.quiz.submit', $quiz->id) }}" method="POST" class="flex-1 flex flex-col overflow-hidden relative">
+        @csrf
+        <div class="flex-1 overflow-y-auto px-4">
+            <div class="max-w-3xl mx-auto w-full py-4 pb-40 relative">
                 @foreach($quiz->questions as $index => $q)
                     @php
                         $parsedText = e($q->question_text);
                         $parsedText = nl2br($parsedText);
                         $parsedText = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
                             $cleanCode = str_replace('<br />', '', $matches[1]);
-                            return '<pre class="bg-[#0f172a] text-emerald-400 p-5 rounded-2xl my-4 overflow-x-auto font-mono text-sm shadow-inner border-2 border-slate-800"><code>' . trim($cleanCode) . '</code></pre>';
+                            return '<div class="text-left"><pre class="bg-[#0f172a] text-emerald-400 p-6 rounded-2xl my-6 overflow-x-auto font-mono text-sm shadow-inner border-2 border-slate-800"><code>' . trim($cleanCode) . '</code></pre></div>';
                         }, $parsedText);
                     @endphp
 
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border-2 border-slate-100">
-                        <h3 class="font-bold text-slate-800 mb-6 text-lg leading-relaxed">
-                            <span class="text-amber-500 mr-2">{{ $index + 1 }}.</span> {!! $parsedText !!}
-                        </h3>
+                    <div x-show="currentIndex === {{ $index }}" 
+                         style="display: none;"
+                         x-transition:enter="transition-all ease-out duration-300" 
+                         x-transition:enter-start="opacity-0 translate-x-12" 
+                         x-transition:enter-end="opacity-100 translate-x-0" 
+                         class="w-full w-full">
+                        
+                        <h2 class="font-black text-slate-800 mb-10 text-2xl md:text-3xl leading-relaxed">
+                            {!! $parsedText !!}
+                        </h2>
 
                         @if($q->type == 'arrange')
                             <div x-data="{
@@ -45,19 +58,21 @@
                                         this.selected.splice(i, 1);
                                     }
                                  }">
-                                <div class="min-h-[100px] p-6 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/50 mb-6 flex flex-wrap gap-3 items-center">
+                                 
+                                <div class="min-h-[120px] py-6 border-t-2 border-b-2 border-slate-200 mb-10 flex flex-wrap gap-3 items-center">
                                     <template x-if="selected.length === 0">
-                                        <span class="text-slate-400 text-sm font-bold w-full text-center">Tap blok di bawah buat nyusun kode...</span>
+                                        <div class="w-full border-2 border-dashed border-slate-200 rounded-2xl h-14 flex items-center justify-center bg-slate-50"></div>
                                     </template>
                                     <template x-for="(block, i) in selected" :key="i">
-                                        <button @click="moveToAvailable(i)" type="button" class="px-5 py-3 bg-amber-500 text-white font-mono text-sm rounded-xl shadow-[0_4px_0_0_#b45309] active:translate-y-[4px] active:shadow-none transition-all">
+                                        <button @click="moveToAvailable(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-base font-bold rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none transition-all">
                                             <span x-text="block"></span>
                                         </button>
                                     </template>
                                 </div>
-                                <div class="p-6 rounded-2xl bg-slate-100 flex flex-wrap gap-3 justify-center border-2 border-slate-200">
+                                
+                                <div class="flex flex-wrap gap-3 justify-center">
                                     <template x-for="(block, i) in available" :key="i">
-                                        <button @click="moveToSelected(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-sm rounded-xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none transition-all">
+                                        <button @click="moveToSelected(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-base font-bold rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none transition-all">
                                             <span x-text="block"></span>
                                         </button>
                                     </template>
@@ -67,11 +82,11 @@
                         @else
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach(['a','b','c','d'] as $opt)
-                                    <label class="cursor-pointer group">
-                                        <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer" required>
-                                        <div class="p-5 rounded-2xl border-2 border-slate-100 peer-checked:border-amber-400 peer-checked:bg-amber-50 text-slate-600 peer-checked:text-amber-900 font-medium transition-all flex items-center shadow-sm">
-                                            <span class="inline-flex w-10 h-10 bg-slate-100 text-slate-500 peer-checked:bg-amber-400 peer-checked:text-white rounded-xl items-center justify-center text-sm font-black mr-4 uppercase shrink-0 transition-colors">{{ $opt }}</span>
-                                            <span class="text-sm font-bold">{{ $q->{'option_'.$opt} }}</span>
+                                    <label class="cursor-pointer group block">
+                                        <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer">
+                                        <div class="p-6 rounded-2xl border-2 border-slate-200 peer-checked:border-sky-400 peer-checked:bg-sky-50 text-slate-600 peer-checked:text-sky-900 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] peer-checked:shadow-[0_4px_0_0_#38bdf8] active:translate-y-[4px] active:shadow-none flex items-center bg-white">
+                                            <span class="inline-flex w-10 h-10 border-2 border-slate-200 text-slate-400 peer-checked:border-sky-400 peer-checked:text-sky-500 rounded-xl items-center justify-center text-sm font-black mr-4 uppercase shrink-0 transition-colors">{{ $opt }}</span>
+                                            <span class="text-lg">{{ $q->{'option_'.$opt} }}</span>
                                         </div>
                                     </label>
                                 @endforeach
@@ -80,13 +95,24 @@
                     </div>
                 @endforeach
             </div>
+        </div>
 
-            <div class="mt-10">
-                <button type="submit" class="w-full py-5 bg-amber-500 text-slate-900 font-black text-lg uppercase tracking-widest rounded-3xl shadow-[0_6px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none transition-all">
-                    Submit Jawaban
+        <div class="fixed bottom-0 left-0 w-full bg-white border-t-2 border-slate-200 px-6 py-8 z-50">
+            <div class="max-w-5xl mx-auto flex justify-between items-center">
+                <button type="button" x-show="currentIndex > 0" @click="currentIndex--" class="px-8 py-4 rounded-2xl font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100 active:scale-95 transition-all" style="display: none;">
+                    Kembali
+                </button>
+                <div x-show="currentIndex === 0" class="w-24"></div>
+
+                <button type="button" x-show="currentIndex < totalQuestions - 1" @click="currentIndex++" class="px-12 py-4 bg-emerald-500 text-white font-black text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#059669] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#059669] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center">
+                    Lanjut
+                </button>
+
+                <button type="submit" x-show="currentIndex === totalQuestions - 1" style="display: none;" class="px-12 py-4 bg-amber-500 text-white font-black text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center">
+                    Cek Hasil
                 </button>
             </div>
-        </form>
-    </main>
+        </div>
+    </form>
 </div>
 @endsection

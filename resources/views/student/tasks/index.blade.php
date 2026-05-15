@@ -9,7 +9,7 @@
     .floating { animation: float 3s ease-in-out infinite; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ showLevelUp: false }">
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ showLevelUp: false, showNoQuizModal: false }">
     <aside class="w-64 bg-white border-r-2 border-slate-200 flex flex-col justify-between hidden md:flex shrink-0 z-20">
         <div class="flex-1 overflow-y-auto">
             <div class="h-20 flex items-center px-6 border-b-2 border-slate-100 mb-4 sticky top-0 bg-white/90 backdrop-blur-sm z-10">
@@ -135,9 +135,9 @@
                                                     <i class="fa-solid {{ $isDone ? 'fa-check' : 'fa-star' }} text-white text-3xl"></i>
                                                 </a>
                                             @else
-                                                <div class="level-node w-24 h-24 bg-slate-300 rounded-full border-b-8 border-slate-400 flex items-center justify-center shadow-lg cursor-not-allowed" onclick="alert('Sabar lek! GM belum nyiapin kuis buat materi ini.')">
+                                                <button type="button" @click="showNoQuizModal = true" class="level-node w-24 h-24 bg-slate-300 rounded-full border-b-8 border-slate-400 flex items-center justify-center shadow-lg cursor-not-allowed">
                                                     <i class="fa-solid fa-person-digging text-slate-500 text-3xl"></i>
-                                                </div>
+                                                </button>
                                             @endif
                                             <div class="absolute top-1/2 {{ ($index % 2 == 0) ? 'left-full ml-6' : 'right-full mr-6' }} -translate-y-1/2 bg-white px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-sm whitespace-nowrap">
                                                 <p class="text-sm font-black text-slate-800">{{ $unit->title }}</p>
@@ -167,6 +167,19 @@
                 <h2 class="text-5xl font-black text-white uppercase mb-2">Kasta Terlampaui!</h2>
                 <p class="text-amber-200 font-bold mb-8 text-xl">Lanjutin perjuangan lu ke kasta berikutnya lek!</p>
                 <button @click="showLevelUp = false" class="bg-white text-[#0b276b] font-black px-12 py-4 rounded-2xl shadow-[0_6px_0_0_#cbd5e1] hover:translate-y-[2px] transition-all uppercase">Gaskeun!</button>
+            </div>
+        </div>
+
+        <div x-show="showNoQuizModal" class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-8 relative shadow-2xl border-4 border-slate-300 text-center" @click.away="showNoQuizModal = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                <div class="w-20 h-20 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i class="fa-solid fa-person-digging text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Sabar Lek!</h3>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed text-sm">GM alias dosen lu belum nyiapin soal latihan buat materi ini. Mending lu tagih ke orangnya langsung biar kerjanya cepet!</p>
+                <button @click="showNoQuizModal = false" class="w-full py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    Oke, Gue Tungguin
+                </button>
             </div>
         </div>
     </main>

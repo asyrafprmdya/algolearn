@@ -1,13 +1,8 @@
 @extends('layouts.app')
 @section('content')
 <style>
-    @keyframes fade-in-up {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: none; }
-    }
-    .animate-fade-in-up {
-        animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: none; } }
+    .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
 <div class="flex h-screen bg-slate-50 overflow-hidden">
@@ -76,9 +71,9 @@
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-100" x-data="{
-        questions: [{ id: 1, text: '', type: 'multiple_choice', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '' }],
+        questions: [{ id: 1, text: '', type: '{{ $category == "evaluation" ? "multiple_choice" : "arrange" }}', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '' }],
         activeModalId: null,
-        addQuestion() { this.questions.push({ id: Date.now(), text: '', type: 'multiple_choice', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '' }); },
+        addQuestion() { this.questions.push({ id: Date.now(), text: '', type: '{{ $category == "evaluation" ? "multiple_choice" : "arrange" }}', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '' }); },
         removeQuestion(id) { this.questions = this.questions.filter(q => q.id !== id); }
     }">
         <header class="h-20 flex justify-end items-center px-8 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur-md z-10">
@@ -95,21 +90,21 @@
                 
                 <div class="mb-8">
                     <div class="flex items-center space-x-3 mb-2">
-                        <a href="{{ route('lecturer.materials.index') }}" class="text-slate-400 hover:text-amber-500 transition-colors">
+                        <a href="{{ route('lecturer.quiz.index') }}" class="text-slate-400 hover:text-amber-500 transition-colors">
                             <i class="fa-solid fa-circle-left text-2xl"></i>
                         </a>
-                        <span class="bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Arena Ujian</span>
+                        <span class="bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                            Buat {{ $category == 'evaluation' ? 'Evaluasi' : 'Arena Latihan' }}
+                        </span>
                     </div>
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight uppercase">Buat Kuis: {{ $material->title }}</h1>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight uppercase">Misi: {{ $material->title }}</h1>
                     <p class="text-slate-500 font-medium text-sm mt-1">Siksa mahasiswamu dengan pertanyaan-pertanyaan menjebak. Ketik [code]...[/code] untuk menonjolkan kodingan.</p>
                 </div>
 
                 <form action="{{ route('lecturer.quiz.store', $material->id) }}" method="POST">
                     @csrf
                     
-                    <div class="bg-white rounded-3xl border-2 border-slate-200 shadow-sm mb-8 relative group hover:border-amber-300 transition-colors"
-                         x-data="{ openCat: false, category: 'practice' }"
-                         :class="openCat ? 'z-50' : 'z-20'">
+                    <div class="bg-white rounded-3xl border-2 border-slate-200 shadow-sm mb-8 relative group hover:border-amber-300 transition-colors z-20">
                         
                         <div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
                             <div class="absolute -right-6 -top-6 text-amber-50 group-hover:scale-110 transition-transform">
@@ -120,7 +115,7 @@
                         <div class="relative z-10 p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-widest ml-1">Judul Ujian / Kuis</label>
-                                <input type="text" name="title" required class="w-full px-5 py-4 rounded-xl border-2 border-slate-100 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 text-slate-800 font-bold transition-all" placeholder="Contoh: Evaluasi Array Mematikan">
+                                <input type="text" name="title" required class="w-full px-5 py-4 rounded-xl border-2 border-slate-100 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 text-slate-800 font-bold transition-all" placeholder="Contoh: Evaluasi Mematikan">
                             </div>
                             <div>
                                 <label class="block text-xs font-black text-slate-500 uppercase mb-2 tracking-widest ml-1">Nilai Kelulusan (KKM)</label>
@@ -131,20 +126,29 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-span-1 md:col-span-2 mt-2">
-                                <label class="block text-xs font-black text-slate-500 uppercase mb-3 tracking-widest ml-1">Kategori Kuis</label>
-                                <div class="relative" @click.outside="openCat = false">
-                                    <button type="button" @click="openCat = !openCat" class="w-full flex items-center justify-between px-6 py-5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-800 font-black text-sm uppercase tracking-widest transition-all">
-                                        <span x-text="category === 'practice' ? 'Arena Latihan' : 'Evaluasi Materi (Pop-up)'"></span>
-                                        <i class="fa-solid fa-tags transition-transform duration-300" :class="openCat ? 'text-indigo-600 rotate-180' : 'text-indigo-400'"></i>
-                                    </button>
-                                    <div x-show="openCat" x-transition.opacity.duration.200ms class="absolute w-full mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl overflow-hidden" style="display: none;">
-                                        <button type="button" @click="category = 'practice'; openCat = false" class="w-full text-left px-6 py-4 hover:bg-indigo-50 font-black text-xs uppercase tracking-widest transition-colors" :class="category === 'practice' ? 'text-indigo-700 bg-indigo-50' : 'text-slate-600'">Arena Latihan</button>
-                                        <button type="button" @click="category = 'evaluation'; openCat = false" class="w-full text-left px-6 py-4 border-t-2 border-slate-50 hover:bg-indigo-50 font-black text-xs uppercase tracking-widest transition-colors" :class="category === 'evaluation' ? 'text-indigo-700 bg-indigo-50' : 'text-slate-600'">Evaluasi Materi (Pop-up)</button>
+                            
+                            <div class="col-span-1 md:col-span-2 mt-2 flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-2xl border-2 border-indigo-200 bg-indigo-50/50">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner text-2xl">
+                                        <i class="fa-solid fa-lock"></i>
                                     </div>
-                                    <input type="hidden" name="category" :value="category">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-indigo-400 uppercase mb-0.5 tracking-widest">Kategori Paket (Digembok)</label>
+                                        <p class="text-lg font-black text-indigo-900 uppercase tracking-widest">
+                                            @if($category == 'evaluation')
+                                                <i class="fa-solid fa-star text-amber-500 mr-2"></i> Evaluasi Materi (Pop-up)
+                                            @else
+                                                <i class="fa-solid fa-gamepad text-emerald-500 mr-2"></i> Arena Latihan (Tugas)
+                                            @endif
+                                        </p>
+                                    </div>
                                 </div>
+                                <div class="mt-4 md:mt-0 px-5 py-3 bg-white rounded-xl border-2 border-indigo-100 shadow-sm">
+                                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Aman dari Jari Kepeleset</p>
+                                </div>
+                                <input type="hidden" name="category" value="{{ $category }}">
                             </div>
+
                         </div>
                     </div>
 

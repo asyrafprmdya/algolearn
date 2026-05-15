@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Material;
+use App\Models\Quiz;
 use App\Models\PretestQuestion;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,11 +28,38 @@ class StudentController extends Controller
     public function submitPretest(Request $request)
     {
         $user = Auth::user();
-        
+        $questions = PretestQuestion::all();
+        $score = 0;
+        $total = $questions->count();
+
+        if ($request->has('answers')) {
+            foreach ($request->answers as $qId => $ans) {
+                $q = $questions->where('id', $qId)->first();
+                if ($q && strtolower($q->correct_answer) === strtolower($ans)) {
+                    $score++;
+                }
+            }
+        }
+
+        $finalScore = $total > 0 ? round(($score / $total) * 100) : 0;
+
+        if ($finalScore >= 80) {
+            $user->level = 'Lanjutan';
+        } elseif ($finalScore >= 50) {
+            $user->level = 'Menengah';
+        } else {
+            $user->level = 'Pemula';
+        }
+
         $user->has_completed_pretest = true;
         $user->save();
 
-        return redirect()->route('student.dashboard');
+        return redirect()->route('student.pretest.result')->with([
+            'score' => $finalScore,
+            'level' => $user->level,
+            'correct' => $score,
+            'total' => $total
+        ]);
     }
 
     public function indexTasks()
@@ -52,11 +80,10 @@ class StudentController extends Controller
 
     public function showMaterial(Material $material)
     {
-        $material->load(['quizzes' => function($query) {
-            $query->where('category', 'evaluation')->with('questions');
-        }]);
-        
-        $quiz = $material->quizzes->first();
+        $quiz = Quiz::where('material_id', $material->id)
+                    ->where('category', 'evaluation')
+                    ->with('questions')
+                    ->first();
         
         return view('student.material.show', compact('material', 'quiz'));
     }

@@ -2,13 +2,18 @@
 @section('content')
 @php
     $user = Illuminate\Support\Facades\Auth::user();
-    $results = \App\Models\QuizResult::with('quiz')->where('user_id', $user->id)->get();
     
-    $passedQuizzes = $results->filter(function($result) {
-        return $result->score >= ($result->quiz->passing_grade ?? 70);
-    })->count();
+    $totalQuizzes = \App\Models\Quiz::where('category', 'practice')->count();
 
-    $totalQuizzes = \App\Models\Quiz::count();
+    $passedQuizzes = \App\Models\QuizResult::where('user_id', $user->id)
+        ->where('is_passed', true)
+        ->whereHas('quiz', function($query) {
+            $query->where('category', 'practice');
+        })
+        ->pluck('quiz_id')
+        ->unique()
+        ->count();
+
     $totalMaterials = \App\Models\Material::count();
 
     $progress = $totalQuizzes > 0 ? round(($passedQuizzes / $totalQuizzes) * 100) : 0;
@@ -115,7 +120,6 @@
         <div class="flex-1 overflow-y-auto p-4 sm:p-8">
             <div class="max-w-5xl mx-auto space-y-6">
                 
-                <!-- Banner Utama -->
                 <div class="bg-[#0b276b] rounded-[2rem] p-8 sm:p-10 text-white shadow-xl relative overflow-hidden animate-fade-in-up" style="animation-delay: 0s;">
                     <div class="absolute right-0 top-0 opacity-20 text-[180px] -mt-16 -mr-16 animate-float-tilt pointer-events-none">
                         <i class="fa-solid fa-gamepad"></i>
@@ -130,7 +134,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
-                    <!-- Progress Card -->
                     <div class="bg-white p-6 sm:p-8 rounded-[2rem] border-2 border-slate-200 shadow-sm md:col-span-2 animate-fade-in-up hover:border-blue-200 transition-colors group" style="animation-delay: 0.1s;">
                         <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center">
                             <div class="w-10 h-10 rounded-full bg-blue-50 text-[#0b276b] flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
@@ -156,7 +159,6 @@
                         </div>
                     </div>
 
-                    <!-- Stats Card -->
                     <div class="bg-white p-6 sm:p-8 rounded-[2rem] border-2 border-slate-200 shadow-sm flex flex-col justify-center items-center text-center animate-fade-in-up hover:border-blue-200 transition-colors group" style="animation-delay: 0.2s;">
                         <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-3xl mb-4 shadow-inner border-4 border-white group-hover:scale-110 transition-transform group-hover:bg-blue-500 group-hover:text-white">
                             <i class="fa-solid fa-book-bookmark"></i>
@@ -167,7 +169,6 @@
 
                 </div>
 
-                <!-- CTA Card -->
                 <div class="bg-white rounded-[2rem] border-2 border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 animate-fade-in-up hover:border-amber-200 transition-colors" style="animation-delay: 0.3s;">
                     <div class="text-center sm:text-left">
                         <h3 class="text-2xl font-black text-slate-800 mb-2">Misi Selanjutnya</h3>

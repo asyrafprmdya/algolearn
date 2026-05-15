@@ -1,16 +1,11 @@
 @extends('layouts.app')
 @section('content')
 <style>
-    @keyframes fade-in-up {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: none; }
-    }
-    .animate-fade-in-up {
-        animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: none; } }
+    .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ showDeleteModal: false, deleteUrl: '', deleteTitle: '' }">
+<div class="flex h-screen bg-slate-50 overflow-hidden">
     @php
         $isLecturer = Auth::user()->role === 'lecturer'; 
         $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
@@ -29,33 +24,15 @@
                 </div>
             </div>
 
-            <div class="px-6 mb-8 mt-2">
-                <p class="text-[10px] font-black {{ $isLecturer ? 'text-slate-500' : 'text-slate-400' }} uppercase tracking-widest mb-2">Role: Dosen</p>
-                <div class="inline-block">
-                    <p class="text-xs font-black {{ $isLecturer ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-600 bg-emerald-50 border-emerald-100' }} py-2 px-4 rounded-xl uppercase tracking-wide border-2 shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-shield-halved"></i> DOSEN PENGAMPU
-                    </p>
-                </div>
-            </div>
-
             <nav class="px-4 space-y-2 mb-4">
-                <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu : $textMenu }}">
                     <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i><span>Dashboard</span>
                 </a>
-                <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu : $textMenu }}">
                     <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Kelola Materi</span>
                 </a>
-                <a href="{{ route('lecturer.materials.create') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.create', 'lecturer.materials.edit') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-hammer w-6 text-center text-lg"></i><span>Buat Materi</span>
-                </a>
-                <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i><span>Markas Pretest</span>
-                </a>
-                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu : $textMenu }}">
                     <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i><span>Bank Kuis</span>
-                </a>
-                <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                    <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i><span>Laporan Mahasiswa</span>
                 </a>
             </nav>
         </div>
@@ -63,110 +40,82 @@
         <div class="p-4 border-t {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} shrink-0">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30 hover:text-red-500' : 'text-slate-500 hover:bg-red-50 hover:text-red-600' }} rounded-2xl font-bold text-sm w-full transition-all group">
-                    <i class="fa-solid fa-power-off w-6 text-center text-lg group-hover:rotate-90 transition-transform"></i><span>Keluar</span>
+                <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30' : 'text-slate-500 hover:bg-red-50' }} rounded-2xl font-bold text-sm w-full">
+                    <i class="fa-solid fa-power-off w-6 text-center text-lg"></i><span>Keluar</span>
                 </button>
             </form>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden bg-slate-100">
-        <header class="h-20 flex justify-end items-center px-8 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur-md z-10">
-            <div class="flex items-center space-x-4">
-                <span class="text-sm font-bold text-slate-500">Dosen {{ Auth::user()->name }}</span>
-                <div class="w-10 h-10 rounded-xl bg-amber-500 border-2 border-white shadow-md flex items-center justify-center text-white font-black text-lg">{{ substr(Auth::user()->name, 0, 1) }}</div>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8">
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-100" x-data="{ showDeleteModal: false, deleteActionUrl: '' }">
+        <div class="flex-1 overflow-y-auto p-8 relative">
             <div class="max-w-6xl mx-auto animate-fade-in-up">
                 <div class="mb-8">
-                    <div class="inline-block bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm mb-2">Pusat Evaluasi</div>
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight uppercase">Bank Kuis</h1>
-                    <p class="text-slate-500 font-medium text-sm mt-1">Kelola jebakan kuis berdasarkan materi yang udah lu rilis ke mahasiswa.</p>
+                    <p class="text-slate-500 font-medium text-sm mt-1">Daftar semua kuis yang udah lu bikin. Hati-hati pas ngerusak data!</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @forelse($materials as $material)
-                        @php
-                            $quiz = $material->quizzes->first();
-                            $hasQuiz = $quiz !== null;
-                            $kastaColor = match($material->level) {
-                                'Pemula' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                'Menengah' => 'bg-blue-100 text-blue-700 border-blue-200',
-                                'Lanjutan' => 'bg-purple-100 text-purple-700 border-purple-200',
-                                default => 'bg-slate-100 text-slate-700 border-slate-200',
-                            };
-                        @endphp
-                        <div class="bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm hover:border-amber-300 transition-all group relative overflow-hidden flex flex-col">
-                            <div class="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform text-slate-900"><i class="fa-solid fa-dice-d20 text-8xl"></i></div>
-                            <div class="flex justify-between items-start mb-4 relative z-10">
-                                <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border {{ $kastaColor }} shadow-sm">{{ $material->level }}</span>
-                                @if($hasQuiz)
-                                    <span class="flex items-center space-x-1 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100 text-[9px] font-black uppercase tracking-widest"><i class="fa-solid fa-check-circle"></i><span>Aktif</span></span>
-                                @else
-                                    <span class="flex items-center space-x-1 text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 text-[9px] font-black uppercase tracking-widest"><i class="fa-solid fa-hourglass-half"></i><span>Kosong</span></span>
-                                @endif
-                            </div>
-                            <h3 class="text-lg font-black text-slate-800 uppercase tracking-tight mb-2 line-clamp-2">{{ $material->title }}</h3>
-                            <div class="flex-1">
-                                @if($hasQuiz)
-                                    <p class="text-xs font-bold text-slate-500 mb-6">Terdapat <span class="text-slate-800">{{ $quiz->questions->count() }}</span> soal yang siap menguji mental mahasiswa.</p>
-                                @else
-                                    <p class="text-xs font-bold text-slate-400 italic mb-6">Materi ini masih polos. Belum ada kuis buat ngetes maba.</p>
-                                @endif
-                            </div>
-
-                            <div class="mt-auto pt-4 border-t border-slate-50 relative z-10">
-                                @if($hasQuiz)
-                                    <div class="grid grid-cols-1 gap-2">
-                                        <a href="{{ route('lecturer.quiz.edit', $quiz->id) }}" class="w-full py-3 bg-amber-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-[0_4px_0_0_#b45309] hover:shadow-[0_2px_0_0_#b45309] hover:translate-y-[2px] transition-all flex items-center justify-center space-x-2">
-                                            <i class="fa-solid fa-pen-to-square"></i><span>Edit Kuis</span>
-                                        </a>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <a href="{{ route('lecturer.quiz.show', $quiz->id) }}" class="py-3 bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center space-x-2">
-                                                <i class="fa-solid fa-eye"></i><span>Cek</span>
-                                            </a>
-                                            <button @click="showDeleteModal = true; deleteUrl = '{{ route('lecturer.quiz.destroy', $quiz->id) }}'; deleteTitle = '{{ addslashes($quiz->title) }}'" type="button" class="py-3 bg-red-50 text-red-500 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-red-100 transition-all flex items-center justify-center space-x-2 border border-red-100">
-                                                <i class="fa-solid fa-trash-can"></i><span>Hapus</span>
-                                            </button>
-                                        </div>
+                @foreach($materials as $material)
+                <div class="bg-white rounded-3xl border-2 border-slate-200 shadow-sm mb-6 overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-4 border-b-2 border-slate-200 flex justify-between items-center">
+                        <h2 class="font-black text-slate-700 uppercase tracking-tight">{{ $material->title }}</h2>
+                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-lg uppercase tracking-widest">{{ $material->level }}</span>
+                    </div>
+                    <div class="p-6">
+                        @if($material->quizzes->isEmpty())
+                            <p class="text-center text-slate-400 font-bold text-sm py-4 italic">Belum ada kuis buat materi ini lek.</p>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($material->quizzes as $quiz)
+                                <div class="p-5 rounded-2xl border-2 {{ $quiz->category === 'evaluation' ? 'border-amber-200 bg-amber-50/30' : 'border-emerald-200 bg-emerald-50/30' }} flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] font-black {{ $quiz->category === 'evaluation' ? 'text-amber-500' : 'text-emerald-500' }} uppercase tracking-widest mb-1">
+                                            {{ $quiz->category === 'evaluation' ? 'Evaluasi Pop-up' : 'Arena Latihan' }}
+                                        </p>
+                                        <h3 class="font-black text-slate-800 tracking-tight">{{ $quiz->title }}</h3>
+                                        <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase">Lulus: {{ $quiz->passing_grade }}%</p>
                                     </div>
-                                @else
-                                    <a href="{{ route('lecturer.quiz.create', $material->id) }}" class="w-full py-4 bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-[0_4px_0_0_#059669] hover:shadow-[0_2px_0_0_#059669] hover:translate-y-[2px] transition-all flex items-center justify-center space-x-2">
-                                        <i class="fa-solid fa-plus-circle"></i><span>Racik Kuis Sekarang</span>
-                                    </a>
-                                @endif
+                                    <div class="flex gap-2">
+                                        <a href="{{ route('lecturer.quiz.edit', $quiz->id) }}" class="w-10 h-10 bg-white border-2 border-slate-200 text-blue-500 rounded-xl flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <button type="button" @click="showDeleteModal = true; deleteActionUrl = '{{ route('lecturer.quiz.destroy', $quiz->id) }}'" class="w-10 h-10 bg-white border-2 border-slate-200 text-red-500 rounded-xl flex items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all shadow-sm">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
-                        </div>
-                    @empty
-                        <div class="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                            <i class="fa-solid fa-box-open text-6xl text-slate-200 mb-4"></i>
-                            <p class="text-slate-400 font-black uppercase tracking-widest">Kaga ada materi, kaga ada kuis. Bikin materi dulu sana!</p>
-                        </div>
-                    @endforelse
+                        @endif
+                    </div>
                 </div>
+                @endforeach
             </div>
+        </div>
+
+        <div x-show="showDeleteModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="absolute inset-0 w-full h-full" @click="showDeleteModal = false"></div>
+            
+            <form :action="deleteActionUrl" method="POST" class="bg-white rounded-3xl w-full max-w-sm p-8 relative z-[1000] shadow-2xl border-4 border-red-500 text-center" @click.stop x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-8">
+                @csrf
+                @method('DELETE')
+                
+                <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg rotate-12">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl -rotate-12"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Hapus Kuis?</h3>
+                <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">Lu yakin mau ngehangusin kuis ini dari muka bumi? Keringat maba lu yang udah ngerjain bakal ikut musnah kaga bisa di-<i>undo</i> lek!</p>
+                
+                <div class="flex flex-col gap-3">
+                    <button type="submit" class="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#b91c1c] active:translate-y-[4px] active:shadow-none transition-all text-xs">
+                        Ya, Musnahkan!
+                    </button>
+                    <button type="button" @click="showDeleteModal = false" class="w-full py-4 bg-slate-100 text-slate-500 font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-all text-xs">
+                        Batalin Aja
+                    </button>
+                </div>
+            </form>
         </div>
     </main>
-
-    <div x-show="showDeleteModal" class="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md" style="display: none;" x-transition>
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md p-10 relative z-[1000] shadow-2xl border-2 border-slate-100 text-center" @click.away="showDeleteModal = false">
-            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-8 border-white">
-                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Hapus Kuis Ini?</h3>
-            <p class="text-slate-500 font-medium mt-2 mb-8">Kuis <span class="font-bold text-slate-700" x-text="deleteTitle"></span> beserta nilai mahasiswa bakal hangus selamanya. Yakin?</p>
-            
-            <div class="flex flex-col space-y-3">
-                <form :action="deleteUrl" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="w-full py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#991b1b] hover:shadow-none hover:translate-y-[2px] transition-all">Hapus Permanen</button>
-                </form>
-                <button @click="showDeleteModal = false" class="w-full py-4 text-slate-400 font-black uppercase tracking-widest text-xs">Batal</button>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection

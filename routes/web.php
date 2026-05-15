@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/quizzes/{quiz}', [LecturerController::class, 'updateQuiz'])->name('quiz.update');
         Route::get('/quizzes/{quiz}', [LecturerController::class, 'showQuiz'])->name('quiz.show');
         Route::delete('/quizzes/{quiz}', [LecturerController::class, 'destroyQuiz'])->name('quiz.destroy');
+        Route::post('/students/{id}/reset', [LecturerController::class, 'resetStudent'])->name('students.reset');
     });
 
     Route::middleware(['role:student'])->prefix('student')->name('student.')->group(function () {

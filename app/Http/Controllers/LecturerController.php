@@ -122,9 +122,10 @@ class LecturerController extends Controller
         return view('lecturer.quizzes.index', compact('materials'));
     }
 
-    public function createQuiz(Material $material)
+    public function createQuiz(Request $request, Material $material)
     {
-        return view('lecturer.quizzes.create', compact('material'));
+        $category = $request->query('category', 'practice');
+        return view('lecturer.quizzes.create', compact('material', 'category'));
     }
 
     public function storeQuiz(Request $request, Material $material)
@@ -257,5 +258,15 @@ class LecturerController extends Controller
     {
         $pretest->delete();
         return back();
+    }
+    public function resetStudent($id)
+    {
+        $student = \App\Models\User::findOrFail($id);
+        
+        \App\Models\QuizResult::where('user_id', $student->id)->delete();
+        
+        $student->update(['level' => 'Belum']);
+
+        return redirect()->back()->with('success', 'Dosa maba berhasil di-reset. Dia balik jadi cupu lagi!');
     }
 }

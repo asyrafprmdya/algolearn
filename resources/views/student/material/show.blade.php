@@ -5,7 +5,17 @@
     .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ activeTab: 'video', showQuizModal: false, isSubmittingProgress: false, showWarning: false }">
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ 
+        activeTab: 'video', 
+        showQuizModal: false, 
+        isSubmittingProgress: false, 
+        showWarning: false,
+        currentIndex: 0,
+        totalQuestions: {{ $quiz && $quiz->questions ? $quiz->questions->count() : 0 }},
+        progress() {
+            return this.totalQuestions > 0 ? ((this.currentIndex + 1) / this.totalQuestions) * 100 : 0;
+        }
+    }">
     
     @php
         $isLecturer = Auth::user()->role === 'lecturer'; 
@@ -292,100 +302,127 @@
         </div>
 
         @if($quiz && $quiz->questions->count() > 0)
-        <div x-show="showQuizModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-md" style="display: none;" x-transition @click.self="showWarning = true">
-            <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl border-4 border-indigo-500">
-                
-                <div class="px-8 py-6 border-b-2 border-slate-100 bg-indigo-50 flex justify-between items-center shrink-0">
-                    <div>
-                        <h3 class="text-2xl font-black text-indigo-900 uppercase tracking-tight">Evaluasi Kilat</h3>
-                        <p class="text-xs font-bold text-indigo-600 mt-1">Selesaikan ini buat buktiin lu beneran baca!</p>
-                    </div>
-                    <div class="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xl font-black shadow-lg">
-                        <i class="fa-solid fa-stopwatch"></i>
+        <div x-show="showQuizModal"
+             style="display: none;"
+             class="fixed inset-0 z-[9999] bg-white flex flex-col overflow-hidden"
+             x-transition:enter="transition-all ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-full"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition-all ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-full">
+
+            <header class="w-full px-6 py-8 flex items-center justify-between max-w-5xl mx-auto gap-6 shrink-0 z-50 bg-white border-b-2 border-slate-50">
+                <button type="button" @click="showWarning = true" class="text-slate-300 hover:text-red-500 transition-colors active:scale-90" title="Tutup">
+                    <i class="fa-solid fa-xmark text-3xl"></i>
+                </button>
+                <div class="flex-1 h-5 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full transition-all duration-500 ease-out relative" :style="'width: ' + progress() + '%'">
+                        <div class="absolute top-1 left-2 right-2 h-1.5 bg-white/30 rounded-full"></div>
                     </div>
                 </div>
+                <div class="font-black text-amber-500 text-lg w-12 text-center" x-text="(currentIndex + 1) + '/' + totalQuestions"></div>
+            </header>
 
-                <div class="p-8 overflow-y-auto flex-1 bg-slate-50 custom-scrollbar">
-                    <form action="{{ route('student.quiz.evaluasi.submit', $quiz->id) }}" method="POST" id="evalForm">
-                        @csrf
-                        <div class="space-y-6">
-                            @foreach($quiz->questions as $index => $q)
-                                @php
-                                    $parsedText = e($q->question_text);
-                                    $parsedText = nl2br($parsedText);
-                                    $parsedText = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
-                                        $cleanCode = str_replace('<br />', '', $matches[1]);
-                                        return '<pre class="bg-[#0f172a] text-emerald-400 p-5 rounded-2xl my-4 overflow-x-auto font-mono text-sm shadow-inner border-2 border-slate-800"><code>' . trim($cleanCode) . '</code></pre>';
-                                    }, $parsedText);
-                                @endphp
+            <form action="{{ route('student.quiz.evaluasi.submit', $quiz->id) }}" method="POST" class="flex-1 flex flex-col overflow-hidden relative bg-slate-50">
+                @csrf
+                <div class="flex-1 overflow-y-auto px-4">
+                    <div class="max-w-3xl mx-auto w-full py-8 pb-40 relative">
+                        @foreach($quiz->questions as $index => $q)
+                            @php
+                                $parsedText = e($q->question_text);
+                                $parsedText = nl2br($parsedText);
+                                $parsedText = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
+                                    $cleanCode = str_replace('<br />', '', $matches[1]);
+                                    return '<div class="text-left"><pre class="bg-[#0f172a] text-amber-400 p-6 rounded-2xl my-6 overflow-x-auto font-mono text-sm shadow-inner border-2 border-slate-800"><code>' . trim($cleanCode) . '</code></pre></div>';
+                                }, $parsedText);
+                            @endphp
 
-                                @if($q->type == 'arrange')
-                                    <div class="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:border-indigo-200 transition-colors"
-                                         x-data="{
-                                            available: @js(explode(',', $q->options)),
-                                            selected: [],
-                                            moveToSelected(i) {
-                                                this.selected.push(this.available[i]);
-                                                this.available.splice(i, 1);
-                                            },
-                                            moveToAvailable(i) {
-                                                this.available.push(this.selected[i]);
-                                                this.selected.splice(i, 1);
-                                            }
-                                         }">
-                                        <h4 class="font-bold text-slate-800 mb-5 leading-relaxed">
-                                            <span class="text-indigo-500 mr-2">{{ $index + 1 }}.</span> {!! $parsedText !!}
-                                        </h4>
-                                        <div class="min-h-[80px] p-4 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 mb-6 flex flex-wrap gap-2 items-center">
-                                            <template x-if="selected.length === 0">
-                                                <span class="text-slate-400 text-xs font-bold w-full text-center">Tap blok di bawah buat nyusun...</span>
-                                            </template>
-                                            <template x-for="(block, i) in selected" :key="i">
-                                                <button @click="moveToAvailable(i)" type="button" class="px-4 py-2 bg-indigo-600 text-white font-mono text-xs rounded-lg shadow-[0_3px_0_0_#4338ca] active:translate-y-[3px] active:shadow-none transition-all">
-                                                    <span x-text="block"></span>
-                                                </button>
-                                            </template>
+                            <div x-show="currentIndex === {{ $index }}" 
+                                 style="display: none;"
+                                 x-transition:enter="transition-all ease-out duration-300" 
+                                 x-transition:enter-start="opacity-0 translate-x-12" 
+                                 x-transition:enter-end="opacity-100 translate-x-0" 
+                                 class="w-full">
+                                
+                                <div class="bg-white p-8 sm:p-10 rounded-[2rem] border-2 border-slate-200 shadow-sm">
+                                    <h2 class="font-black text-slate-800 mb-10 text-2xl md:text-3xl leading-relaxed">
+                                        {!! $parsedText !!}
+                                    </h2>
+
+                                    @if($q->type == 'arrange')
+                                        <div x-data="{
+                                                available: @js(explode(',', $q->options)),
+                                                selected: [],
+                                                moveToSelected(i) {
+                                                    this.selected.push(this.available[i]);
+                                                    this.available.splice(i, 1);
+                                                },
+                                                moveToAvailable(i) {
+                                                    this.available.push(this.selected[i]);
+                                                    this.selected.splice(i, 1);
+                                                }
+                                             }">
+                                             
+                                            <div class="min-h-[120px] py-6 border-t-2 border-b-2 border-slate-100 mb-10 flex flex-wrap gap-3 items-center bg-slate-50 px-6 rounded-2xl">
+                                                <template x-if="selected.length === 0">
+                                                    <div class="w-full border-2 border-dashed border-slate-300 rounded-2xl h-14 flex items-center justify-center bg-white text-slate-400 font-bold text-sm">Susun balok di sini...</div>
+                                                </template>
+                                                <template x-for="(block, i) in selected" :key="i">
+                                                    <button @click="moveToAvailable(i)" type="button" class="px-5 py-3 bg-amber-500 text-white font-mono text-base font-bold rounded-2xl shadow-[0_4px_0_0_#b45309] active:translate-y-[4px] active:shadow-none transition-all">
+                                                        <span x-text="block"></span>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                            
+                                            <div class="flex flex-wrap gap-3 justify-center p-6 bg-slate-100 border-2 border-slate-200 rounded-2xl">
+                                                <template x-for="(block, i) in available" :key="i">
+                                                    <button @click="moveToSelected(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-base font-bold rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none transition-all">
+                                                        <span x-text="block"></span>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                            <input type="hidden" name="answers[{{ $q->id }}]" :value="selected.join(' ')">
                                         </div>
-                                        <div class="p-4 rounded-xl bg-slate-100 flex flex-wrap gap-2 justify-center">
-                                            <template x-for="(block, i) in available" :key="i">
-                                                <button @click="moveToSelected(i)" type="button" class="px-4 py-2 bg-white text-slate-700 font-mono text-xs rounded-lg border-2 border-slate-200 shadow-[0_3px_0_0_#cbd5e1] active:translate-y-[3px] active:shadow-none transition-all">
-                                                    <span x-text="block"></span>
-                                                </button>
-                                            </template>
-                                        </div>
-                                        <input type="hidden" name="answers[{{ $q->id }}]" :value="selected.join(' ')">
-                                    </div>
-                                @else
-                                    <div class="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:border-indigo-200 transition-colors">
-                                        <h4 class="font-bold text-slate-800 mb-5 leading-relaxed"><span class="text-indigo-500 mr-2">{{ $index + 1 }}.</span> {!! $parsedText !!}</h4>
+                                    @else
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             @foreach(['a','b','c','d'] as $opt)
-                                            <label class="cursor-pointer group">
-                                                <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer" required>
-                                                <div class="p-4 rounded-xl border-2 border-slate-100 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 text-slate-600 peer-checked:text-indigo-800 font-medium transition-all flex items-center">
-                                                    <span class="inline-flex w-8 h-8 bg-slate-100 text-slate-500 peer-checked:bg-indigo-500 peer-checked:text-white rounded-lg items-center justify-center text-xs font-black mr-3 uppercase shrink-0 transition-colors">{{ $opt }}</span>
-                                                    <span class="text-sm">{{ $q->{'option_'.$opt} }}</span>
-                                                </div>
-                                            </label>
+                                                <label class="cursor-pointer group block">
+                                                    <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer">
+                                                    <div class="p-6 rounded-2xl border-2 border-slate-200 peer-checked:border-amber-400 peer-checked:bg-amber-50 text-slate-600 peer-checked:text-amber-900 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] peer-checked:shadow-[0_4px_0_0_#fbbf24] active:translate-y-[4px] active:shadow-none flex items-center bg-white">
+                                                        <span class="inline-flex w-10 h-10 border-2 border-slate-200 text-slate-400 peer-checked:border-amber-400 peer-checked:text-amber-500 peer-checked:bg-white rounded-xl items-center justify-center text-sm font-black mr-4 uppercase shrink-0 transition-colors">{{ $opt }}</span>
+                                                        <span class="text-lg">{{ $q->{'option_'.$opt} }}</span>
+                                                    </div>
+                                                </label>
                                             @endforeach
                                         </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </form>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
-                <div class="px-8 py-6 border-t-2 border-slate-100 bg-white shrink-0">
-                    <button type="button" onclick="document.getElementById('evalForm').submit()" class="w-full py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#4f46e5] hover:translate-y-[2px] hover:shadow-none transition-all">
-                        Kumpulkan Evaluasi
-                    </button>
-                </div>
+                <div class="fixed bottom-0 left-0 w-full bg-white border-t-2 border-slate-200 px-6 py-6 sm:py-8 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+                    <div class="max-w-4xl mx-auto flex justify-between items-center">
+                        <button type="button" x-show="currentIndex > 0" @click="currentIndex--" class="px-6 sm:px-8 py-4 rounded-2xl font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100 active:scale-95 transition-all text-xs sm:text-sm" style="display: none;">
+                            Kembali
+                        </button>
+                        <div x-show="currentIndex === 0" class="w-16 sm:w-24"></div>
 
-            </div>
+                        <button type="button" x-show="currentIndex < totalQuestions - 1" @click="currentIndex++" class="px-10 sm:px-12 py-4 bg-amber-500 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center">
+                            Lanjut
+                        </button>
+
+                        <button type="submit" x-show="currentIndex === totalQuestions - 1" style="display: none;" class="px-10 sm:px-12 py-4 bg-indigo-600 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#4338ca] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#4338ca] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-paper-plane"></i> Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
 
-        <div x-show="showWarning" class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div x-show="showWarning" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             <div class="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl border-4 border-red-500 text-center" @click.away="showWarning = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
                 <div class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg rotate-12">
                     <i class="fa-solid fa-triangle-exclamation text-5xl -rotate-12"></i>

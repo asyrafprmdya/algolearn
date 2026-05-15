@@ -118,9 +118,7 @@
                     @csrf
                     @method('PUT')
                     
-                    <div class="bg-white rounded-3xl border-2 border-slate-200 shadow-sm mb-8 relative group hover:border-amber-300 transition-colors"
-                         x-data="{ openCat: false, category: '{{ $quiz->category ?? 'practice' }}' }"
-                         :class="openCat ? 'z-50' : 'z-20'">
+                    <div class="bg-white rounded-3xl border-2 border-slate-200 shadow-sm mb-8 relative group hover:border-amber-300 transition-colors z-20">
                         
                         <div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
                             <div class="absolute -right-6 -top-6 text-amber-50 group-hover:scale-110 transition-transform">
@@ -142,20 +140,29 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-span-1 md:col-span-2 mt-2">
-                                <label class="block text-xs font-black text-slate-500 uppercase mb-3 tracking-widest ml-1">Kategori Kuis</label>
-                                <div class="relative" @click.outside="openCat = false">
-                                    <button type="button" @click="openCat = !openCat" class="w-full flex items-center justify-between px-6 py-5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-800 font-black text-sm uppercase tracking-widest transition-all">
-                                        <span x-text="category === 'practice' ? 'Arena Latihan' : 'Evaluasi Materi (Pop-up)'"></span>
-                                        <i class="fa-solid fa-tags transition-transform duration-300" :class="openCat ? 'text-indigo-600 rotate-180' : 'text-indigo-400'"></i>
-                                    </button>
-                                    <div x-show="openCat" x-transition.opacity.duration.200ms class="absolute w-full mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl overflow-hidden" style="display: none;">
-                                        <button type="button" @click="category = 'practice'; openCat = false" class="w-full text-left px-6 py-4 hover:bg-indigo-50 font-black text-xs uppercase tracking-widest transition-colors" :class="category === 'practice' ? 'text-indigo-700 bg-indigo-50' : 'text-slate-600'">Arena Latihan</button>
-                                        <button type="button" @click="category = 'evaluation'; openCat = false" class="w-full text-left px-6 py-4 border-t-2 border-slate-50 hover:bg-indigo-50 font-black text-xs uppercase tracking-widest transition-colors" :class="category === 'evaluation' ? 'text-indigo-700 bg-indigo-50' : 'text-slate-600'">Evaluasi Materi (Pop-up)</button>
+                            
+                            <div class="col-span-1 md:col-span-2 mt-2 flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-2xl border-2 border-indigo-200 bg-indigo-50/50">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner text-2xl">
+                                        <i class="fa-solid fa-lock"></i>
                                     </div>
-                                    <input type="hidden" name="category" :value="category">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-indigo-400 uppercase mb-0.5 tracking-widest">Kategori Paket (Digembok)</label>
+                                        <p class="text-lg font-black text-indigo-900 uppercase tracking-widest">
+                                            @if($quiz->category == 'evaluation')
+                                                <i class="fa-solid fa-star text-amber-500 mr-2"></i> Evaluasi Materi (Pop-up)
+                                            @else
+                                                <i class="fa-solid fa-gamepad text-emerald-500 mr-2"></i> Arena Latihan (Tugas)
+                                            @endif
+                                        </p>
+                                    </div>
                                 </div>
+                                <div class="mt-4 md:mt-0 px-5 py-3 bg-white rounded-xl border-2 border-indigo-100 shadow-sm">
+                                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Aman dari Jari Kepeleset</p>
+                                </div>
+                                <input type="hidden" name="category" value="{{ $quiz->category }}">
                             </div>
+
                         </div>
                     </div>
 

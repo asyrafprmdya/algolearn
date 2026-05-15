@@ -1,113 +1,111 @@
 @extends('layouts.app')
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-@php
-    if (!function_exists('formatAlgoCode')) {
-        function formatAlgoCode($text) {
-            if (!$text) return '';
-            $safe = htmlspecialchars($text);
-            $safe = nl2br($safe);
-            $safe = preg_replace_callback('/\[CODE\](.*?)\[\/CODE\]/is', function($matches) {
-                $code = str_replace(['<br />', '<br>'], '', $matches[1]);
-                return '<div class="bg-[#1e1e1e] rounded-xl my-3 overflow-hidden shadow-sm border border-slate-800 w-full block"><div class="bg-[#2d2d2d] px-4 py-2 flex items-center space-x-2 border-b border-black/50"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-amber-500"></div><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-slate-400 text-[10px] font-mono ml-4 uppercase tracking-widest hidden sm:inline-block">Code Snippet</span></div><div class="p-4 overflow-x-auto font-mono text-sm text-green-400 leading-relaxed whitespace-pre-wrap">' . trim($code) . '</div></div>';
-            }, $safe);
-            return $safe;
+<div class="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden" 
+     x-data="{ 
+        showLevelModal: {{ session()->has('level_up') ? 'true' : 'false' }},
+        triggerConfetti() {
+            let duration = 3 * 1000;
+            let end = Date.now() + duration;
+            let frame = () => {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#f59e0b', '#10b981', '#3b82f6', '#ef4444']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#f59e0b', '#10b981', '#3b82f6', '#ef4444']
+                });
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            };
+            frame();
         }
-    }
+     }"
+     x-init="if(showLevelModal) setTimeout(() => triggerConfetti(), 400)">
     
-    $isPassed = $score >= $quiz->passing_grade;
-@endphp
-
-<div class="min-h-screen bg-slate-50 flex flex-col">
-    <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center sticky top-0 z-40 shadow-sm">
-        <a href="{{ route('student.tasks.index') }}" class="mr-6 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#0b276b] hover:text-white transition-colors">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <div>
-            <p class="text-xs font-bold text-[#0b276b] uppercase tracking-wider mb-1">Hasil Evaluasi</p>
-            <h1 class="text-xl font-bold text-slate-800">{{ $quiz->title }}</h1>
-        </div>
-    </header>
-
-    <main class="flex-grow w-full max-w-4xl mx-auto py-10 px-4">
-        
-        <!-- Papan Skor Raksasa -->
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-10 mb-10 flex flex-col items-center text-center relative overflow-hidden">
-            <div class="absolute inset-0 opacity-10 {{ $isPassed ? 'bg-[url(https://www.transparenttextures.com/patterns/stardust.png)]' : 'bg-[url(https://www.transparenttextures.com/patterns/diagmonds-light.png)]' }}"></div>
-            
-            <h2 class="text-2xl font-bold text-slate-600 mb-6 relative z-10">Total Skor Kamu</h2>
-            
-            <div class="w-48 h-48 rounded-full flex items-center justify-center mb-6 relative z-10 shadow-lg border-8 {{ $isPassed ? 'border-emerald-100 bg-emerald-500' : 'border-red-100 bg-red-500' }}">
-                <span class="text-6xl font-black text-white">{{ $score }}</span>
+    <div class="max-w-md w-full text-center animate-fade-in-up">
+        @if($result->is_passed)
+            <div class="w-32 h-32 bg-emerald-100 text-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl rotate-6 hover:rotate-12 hover:scale-110 transition-all duration-300">
+                <i class="fa-solid fa-face-grin-stars text-6xl -rotate-6"></i>
             </div>
-            
-            <h3 class="text-3xl font-extrabold mb-2 relative z-10 {{ $isPassed ? 'text-emerald-600' : 'text-red-600' }}">
-                {{ $isPassed ? 'Luar Biasa, Lulus KKM!' : 'Remedial Woy, Belajar Lagi!' }}
-            </h3>
-            <p class="text-slate-500 relative z-10">Batas Minimal Kelulusan (KKM): <b>{{ $quiz->passing_grade }}</b></p>
-        </div>
-
-        <h3 class="font-bold text-xl text-slate-800 mb-6 px-2">Review Jawabanmu</h3>
-
-        <div class="space-y-6">
-            @foreach($quiz->questions as $index => $question)
-            @php
-                $userAnswer = $answers[$question->id] ?? null;
-                $isCorrect = $userAnswer === $question->correct_option;
-            @endphp
-            <div class="bg-white rounded-xl border-l-8 shadow-sm p-6 {{ $isCorrect ? 'border-emerald-500' : 'border-red-500' }}">
-                
-                <div class="flex items-start justify-between mb-4">
-                    <h4 class="font-bold text-slate-800 text-lg flex items-start space-x-3">
-                        <span class="text-slate-400 mt-1">#{{ $index + 1 }}</span>
-                        <div class="w-full text-slate-700 font-medium">
-                            {!! formatAlgoCode($question->question_text) !!}
-                        </div>
-                    </h4>
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 {{ $isCorrect ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600' }}">
-                        <i class="fa-solid {{ $isCorrect ? 'fa-check' : 'fa-xmark' }}"></i>
-                    </div>
-                </div>
-
-                <div class="pl-10 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    @foreach(['a' => $question->option_a, 'b' => $question->option_b, 'c' => $question->option_c, 'd' => $question->option_d] as $key => $option)
-                    @php
-                        $isThisCorrectOption = $key === $question->correct_option;
-                        $isThisUserChoice = $key === $userAnswer;
-                        
-                        $bgClass = 'bg-slate-50 border-slate-200 text-slate-500';
-                        if ($isThisCorrectOption) $bgClass = 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold';
-                        elseif ($isThisUserChoice && !$isCorrect) $bgClass = 'bg-red-50 border-red-400 text-red-800 line-through opacity-70';
-                    @endphp
-                    <div class="flex items-start p-3 border rounded-lg {{ $bgClass }}">
-                        <span class="uppercase font-extrabold mr-3 shrink-0 {{ $isThisCorrectOption ? 'text-emerald-500' : 'text-slate-400' }}">{{ $key }}.</span>
-                        <div class="break-words w-full">{!! formatAlgoCode($option) !!}</div>
-                        
-                        @if($isThisUserChoice && !$isCorrect)
-                            <i class="fa-solid fa-xmark text-red-500 ml-2 mt-1 shrink-0"></i>
-                        @elseif($isThisCorrectOption)
-                            <i class="fa-solid fa-check text-emerald-500 ml-2 mt-1 shrink-0"></i>
-                        @endif
-                    </div>
-                    @endforeach
-                </div>
-
+            <h1 class="text-4xl font-black text-slate-800 uppercase tracking-tighter mb-4">Luar Biasa!</h1>
+            <p class="text-slate-500 font-bold text-lg leading-relaxed">Lu berhasil nyelesaiin misi ini dengan skor yang kaga malu-maluin.</p>
+        @else
+            <div class="w-32 h-32 bg-red-100 text-red-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl -rotate-6 hover:-rotate-12 hover:scale-110 transition-all duration-300">
+                <i class="fa-solid fa-face-frown-open text-6xl rotate-6"></i>
             </div>
-            @endforeach
+            <h1 class="text-4xl font-black text-slate-800 uppercase tracking-tighter mb-4">Yah, Gagal...</h1>
+            <p class="text-slate-500 font-bold text-lg leading-relaxed">Skor lu masih di bawah KKM lek. Belajar lagi gih, jangan kebanyakan afk!</p>
+        @endif
+
+        <div class="my-12 p-10 rounded-[3rem] {{ $result->is_passed ? 'bg-emerald-50 border-4 border-emerald-100' : 'bg-red-50 border-4 border-red-100' }} relative group hover:scale-105 transition-transform duration-300">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1 bg-white border-2 {{ $result->is_passed ? 'border-emerald-200 text-emerald-500' : 'border-red-200 text-red-500' }} rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
+                Final Result
+            </div>
+            <div class="text-7xl font-black {{ $result->is_passed ? 'text-emerald-600' : 'text-red-600' }} tracking-tighter group-hover:scale-110 transition-transform">
+                {{ $result->score }}<span class="text-2xl opacity-40 ml-1">/100</span>
+            </div>
         </div>
-        
-        <div class="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <a href="{{ route('student.tasks.index') }}" class="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-10 rounded-2xl transition-all border border-slate-200">
-                Kembali ke Daftar Tugas
+
+        <div class="space-y-4 max-w-xs mx-auto">
+            <a href="{{ route('student.tasks.index') }}" class="block w-full py-5 bg-emerald-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#059669] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#059669] active:translate-y-[6px] active:shadow-none transition-all text-sm">
+                Lanjut Beraksi
             </a>
-            
-            @if(!$isPassed)
-            <a href="{{ route('student.quiz.show', $quiz->id) }}" class="inline-block bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#b91c1c]">
-                <i class="fa-solid fa-fire mr-2"></i> Remedial Sekarang!
-            </a>
+            @if(!$result->is_passed)
+                <a href="{{ route('student.material.show', $quiz->material_id) }}" class="block w-full py-4 text-slate-400 hover:text-red-500 font-black uppercase tracking-widest text-[10px] transition-colors">
+                    Baca Ulang Materinya
+                </a>
             @endif
         </div>
+    </div>
 
-    </main>
+    @if(session()->has('level_up'))
+    <div x-show="showLevelModal" 
+         style="display: none;"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-md"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        
+        <div class="bg-white rounded-[3.5rem] w-full max-w-sm p-12 text-center relative shadow-2xl border-b-[12px] border-amber-500"
+             @click.outside="showLevelModal = false"
+             x-transition:enter="transition ease-out duration-500 delay-100" x-transition:enter-start="opacity-0 scale-50 translate-y-20" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-50 translate-y-20">
+            
+            <div class="absolute inset-0 overflow-hidden rounded-[3rem] pointer-events-none opacity-10">
+                <i class="fa-solid fa-crown text-[15rem] absolute -right-10 -top-10 text-amber-500 animate-pulse"></i>
+            </div>
+
+            <div class="relative z-10">
+                <div class="w-28 h-28 bg-gradient-to-tr from-amber-400 to-yellow-300 text-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(251,191,36,0.6)] animate-bounce border-4 border-white">
+                    <i class="fa-solid fa-arrow-up-right-dots text-5xl"></i>
+                </div>
+                
+                <h2 class="text-4xl font-black text-slate-800 uppercase tracking-tighter mb-2">Level Up!</h2>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed text-sm">Kasta lu resmi naik dari <span class="text-slate-800 line-through decoration-red-500 decoration-2">{{ session('level_up')['old'] }}</span> jadi:</p>
+                
+                <div class="bg-amber-50 border-4 border-amber-200 rounded-3xl p-6 mb-10 transform hover:scale-110 hover:-rotate-3 transition-all duration-300 shadow-inner group cursor-default">
+                    <p class="text-3xl font-black text-amber-600 uppercase tracking-widest group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-fire text-orange-500 mr-2 animate-pulse"></i>{{ session('level_up')['new'] }}
+                    </p>
+                </div>
+
+                <button @click="showLevelModal = false" class="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#9a3412] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#9a3412] active:translate-y-[6px] active:shadow-none transition-all text-sm flex justify-center items-center gap-2 group">
+                    <span>Gue Emang Jago!</span>
+                    <i class="fa-solid fa-rocket group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+
 </div>
 @endsection
