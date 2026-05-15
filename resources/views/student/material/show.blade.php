@@ -5,7 +5,7 @@
     .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ activeTab: 'video', showQuizModal: false, isSubmittingProgress: false }">
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ activeTab: 'video', showQuizModal: false, isSubmittingProgress: false, showWarning: false }">
     
     @php
         $isLecturer = Auth::user()->role === 'lecturer'; 
@@ -46,15 +46,27 @@
                     <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                         <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Kelola Materi</span>
                     </a>
+                    <a href="{{ route('lecturer.materials.create') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.create', 'lecturer.materials.edit', 'lecturer.quiz.create', 'lecturer.quiz.edit') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                        <i class="fa-solid fa-hammer w-6 text-center text-lg"></i><span>Buat Materi</span>
+                    </a>
+                    <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                        <i class="fa-solid fa-scroll w-6 text-center text-lg"></i><span>Markas Pretest</span>
+                    </a>
+                    <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                        <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i><span>Bank Kuis</span>
+                    </a>
+                    <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                        <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i><span>Laporan Mahasiswa</span>
+                    </a>
                 @else
                     <a href="{{ route('student.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                         <i class="fa-solid fa-border-all w-6 text-center text-lg"></i><span>Beranda</span>
                     </a>
                     <a href="{{ route('student.material.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.material.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-book-open w-6 text-center text-lg"></i><span>Materi</span>
+                        <i class="fa-solid fa-book-open w-6 text-center text-lg"></i><span>Kurikulum</span>
                     </a>
                     <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
-                        <i class="fa-solid fa-clipboard-list w-6 text-center text-lg"></i><span>Latihan</span>
+                        <i class="fa-solid fa-clipboard-list w-6 text-center text-lg"></i><span>Tugas Saya</span>
                     </a>
                     <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('student.progress.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
                         <i class="fa-solid fa-chart-line w-6 text-center text-lg"></i><span>Laporan Progress</span>
@@ -225,7 +237,6 @@
                 </div>
 
                 <div class="w-full lg:w-1/4 space-y-6">
-                    
                     <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm text-center transition-all hover:border-indigo-300">
                         @if($quiz && $quiz->questions->count() > 0)
                             <h3 class="font-black text-slate-800 mb-2 uppercase tracking-tight">Evaluasi Tersedia</h3>
@@ -275,15 +286,14 @@
                         </a>
                     </div>
                     @endif
-
                 </div>
 
             </div>
         </div>
 
         @if($quiz && $quiz->questions->count() > 0)
-        <div x-show="showQuizModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-md" style="display: none;" x-transition>
-            <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl border-4 border-indigo-500" @click.away="alert('Selesaikan evaluasi terlebih dahulu!')">
+        <div x-show="showQuizModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-md" style="display: none;" x-transition @click.self="showWarning = true">
+            <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl border-4 border-indigo-500">
                 
                 <div class="px-8 py-6 border-b-2 border-slate-100 bg-indigo-50 flex justify-between items-center shrink-0">
                     <div>
@@ -372,6 +382,19 @@
                     </button>
                 </div>
 
+            </div>
+        </div>
+
+        <div x-show="showWarning" class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl border-4 border-red-500 text-center" @click.away="showWarning = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                <div class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg rotate-12">
+                    <i class="fa-solid fa-triangle-exclamation text-5xl -rotate-12"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Eits, Mau Kemana?</h3>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed">Selesaikan evaluasi ini dulu lek! Buktikan kalau lu beneran udah paham materinya sebelum kabur.</p>
+                <button @click="showWarning = false" class="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    Oke, Gue Kerjain!
+                </button>
             </div>
         </div>
         @endif

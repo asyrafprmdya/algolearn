@@ -181,6 +181,7 @@ class LecturerController extends Controller
 
         $quiz->update([
             'title' => $request->title,
+            'category' => $request->category ?? $quiz->category,
             'passing_grade' => $request->passing_grade,
         ]);
 
@@ -198,7 +199,7 @@ class LecturerController extends Controller
                 'option_c' => $isArrange ? '-' : ($q['option_c'] ?? '-'),
                 'option_d' => $isArrange ? '-' : ($q['option_d'] ?? '-'),
                 'options' => $isArrange ? ($q['options_arrange'] ?? null) : null,
-                'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? null),
+                'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? $q['correct_option'] ?? null),
             ]);
         }
 

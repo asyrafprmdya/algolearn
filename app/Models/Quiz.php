@@ -2,21 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quiz extends Model
 {
-    protected $fillable = ['material_id', 'title', 'passing_grade'];
+    use HasFactory;
 
-    public function material(): BelongsTo
+    protected $fillable = [
+        'material_id',
+        'title',
+        'category',
+        'passing_grade',
+    ];
+
+    public function material()
     {
         return $this->belongsTo(Material::class);
     }
 
-    public function questions(): HasMany
+    public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+
+    public function results()
+    {
+        return $this->hasMany(QuizResult::class);
     }
 }

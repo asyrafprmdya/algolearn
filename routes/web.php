@@ -60,9 +60,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:student'])->prefix('student')->name('student.')->group(function () {
         Route::get('/pretest', [PretestController::class, 'index'])->name('pretest.index');
-        Route::post('/pretest', [PretestController::class, 'store'])->name('pretest.store');
+        Route::post('/pretest', [StudentController::class, 'submitPretest'])->name('pretest.store');
         Route::get('/pretest/result', [PretestController::class, 'result'])->name('pretest.result');
-
+        
         Route::middleware(['pretest.completed'])->group(function () {
             Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
             Route::get('/tasks', [StudentController::class, 'indexTasks'])->name('tasks.index');

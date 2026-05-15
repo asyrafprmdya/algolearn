@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Material;
+use App\Models\PretestQuestion;
 use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
@@ -15,6 +16,22 @@ class StudentController extends Controller
         $completedCount = is_array($user->completed_contents) ? count($user->completed_contents) : 0;
         
         return view('student.dashboard', compact('user', 'totalMaterials', 'completedCount'));
+    }
+
+    public function indexPretest()
+    {
+        $questions = PretestQuestion::all();
+        return view('student.pretest', compact('questions'));
+    }
+
+    public function submitPretest(Request $request)
+    {
+        $user = Auth::user();
+        
+        $user->has_completed_pretest = true;
+        $user->save();
+
+        return redirect()->route('student.dashboard');
     }
 
     public function indexTasks()
@@ -38,7 +55,9 @@ class StudentController extends Controller
         $material->load(['quizzes' => function($query) {
             $query->where('category', 'evaluation')->with('questions');
         }]);
+        
         $quiz = $material->quizzes->first();
+        
         return view('student.material.show', compact('material', 'quiz'));
     }
 
