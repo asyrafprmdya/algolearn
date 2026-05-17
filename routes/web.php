@@ -56,12 +56,12 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/quizzes/{quiz}', [LecturerController::class, 'updateQuiz'])->name('quiz.update');
         Route::get('/quizzes/{quiz}', [LecturerController::class, 'showQuiz'])->name('quiz.show');
         Route::delete('/quizzes/{quiz}', [LecturerController::class, 'destroyQuiz'])->name('quiz.destroy');
-        Route::post('/students/{id}/reset', [LecturerController::class, 'resetStudent'])->name('students.reset');
+        Route::post('/lecturer/students/{id}/reset', [\App\Http\Controllers\LecturerController::class, 'resetStudent'])->name('lecturer.students.reset');
     });
 
     Route::middleware(['role:student'])->prefix('student')->name('student.')->group(function () {
         Route::get('/pretest', [PretestController::class, 'index'])->name('pretest.index');
-        Route::post('/pretest', [StudentController::class, 'submitPretest'])->name('pretest.store');
+        Route::post('/pretest', [PretestController::class, 'store'])->name('pretest.store');
         Route::get('/pretest/result', [PretestController::class, 'result'])->name('pretest.result');
         
         Route::middleware(['pretest.completed'])->group(function () {

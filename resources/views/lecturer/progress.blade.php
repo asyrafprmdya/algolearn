@@ -9,7 +9,32 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ openLog: null }">
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ openLog: null, confirmReset: null }">
+    
+    @if(session('success'))
+    <div x-data="{ showToast: true }" 
+         x-show="showToast" 
+         x-init="setTimeout(() => showToast = false, 4000)"
+         class="fixed top-8 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-4 bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-[0_10px_40px_-10px_rgba(16,185,129,0.7)]"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 -translate-y-10 scale-90"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+         x-transition:leave-end="opacity-0 -translate-y-10 scale-90">
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-check-double text-xl"></i>
+        </div>
+        <div>
+            <h4 class="font-black text-sm uppercase tracking-widest">Eksekusi Berhasil!</h4>
+            <p class="text-xs font-bold text-emerald-100">{{ session('success') }}</p>
+        </div>
+        <button type="button" @click="showToast = false" class="ml-2 text-emerald-200 hover:text-white active:scale-90 transition-all">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+    </div>
+    @endif
+
     @php
         $isLecturer = Auth::user()->role === 'lecturer'; 
         $bgSidebar = $isLecturer ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
@@ -140,13 +165,13 @@
                                         </td>
                                         <td class="p-5">
                                             <div class="flex items-center justify-center gap-2">
-                                                <button @click="openLog = {{ $student->id }}" class="px-4 py-2 bg-white border-2 border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600 hover:bg-sky-50 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                                                <button type="button" @click="openLog = {{ $student->id }}" class="px-4 py-2 bg-white border-2 border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-600 hover:bg-sky-50 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5">
                                                     <i class="fa-solid fa-eye"></i> Log
                                                 </button>
                                                 
-                                                <form action="{{ route('lecturer.students.reset', $student->id ?? 0) }}" method="POST" onsubmit="return confirm('Yakin mau ngereset dosa maba ini ke 0?');">
+                                                <form id="reset-form-{{ $student->id }}" action="{{ route('lecturer.students.reset', $student->id) }}" method="POST">
                                                     @csrf
-                                                    <button type="submit" class="px-4 py-2 bg-white border-2 border-slate-200 text-slate-600 hover:border-red-500 hover:text-red-600 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                                                    <button type="button" @click="confirmReset = {{ $student->id }}" class="px-4 py-2 bg-white border-2 border-slate-200 text-slate-600 hover:border-red-500 hover:text-red-600 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center gap-1.5">
                                                         <i class="fa-solid fa-rotate-left"></i> Reset
                                                     </button>
                                                 </form>
@@ -188,7 +213,7 @@
                                 <p class="text-xs font-bold text-slate-400 mt-0.5">Memantau riwayat ujian dan penderitaan</p>
                             </div>
                         </div>
-                        <button @click="openLog = null" class="w-10 h-10 bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl flex items-center justify-center transition-colors">
+                        <button type="button" @click="openLog = null" class="w-10 h-10 bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl flex items-center justify-center transition-colors">
                             <i class="fa-solid fa-xmark text-xl"></i>
                         </button>
                     </div>
@@ -245,6 +270,32 @@
                 </div>
             </div>
         @endforeach
+
+        <div x-show="confirmReset !== null" 
+             class="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" 
+             style="display: none;" 
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" 
+             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-8 relative shadow-2xl border-4 border-red-500 text-center" 
+                 @click.away="confirmReset = null" 
+                 x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                
+                <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg rotate-12">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl -rotate-12"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Yakin Mau Reset?</h3>
+                <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">Semua dosa dan keringat maba ini bakal dihapus permanen. Dia bakal balik lagi jadi cupu kasta terbawah. Yakin lek?</p>
+                
+                <div class="flex flex-col gap-3">
+                    <button type="button" @click="document.getElementById('reset-form-' + confirmReset).submit()" class="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#b91c1c] active:translate-y-[4px] active:shadow-none transition-all text-xs">
+                        Ya, Reset Sekarang!
+                    </button>
+                    <button type="button" @click="confirmReset = null" class="w-full py-4 bg-slate-100 text-slate-500 font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-all text-xs">
+                        Batalin Aja
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </main>
 </div>

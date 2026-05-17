@@ -13,7 +13,7 @@ class TaskController extends Controller
     {
         // Peta skor level buat ngecek akses
         $levelScores = ['Pemula' => 1, 'Menengah' => 2, 'Lanjutan' => 3];
-        $userLevelScore = $levelScores[Auth::user()->getLevel()] ?? 1;
+        $userLevelScore = $levelScores[Auth::user()->getRawLevel()] ?? 1;
 
         // Ambil semua kuis beserta materinya, filter sesuai level mahasiswa
         $quizzes = Quiz::with('material')->get()->filter(function ($quiz) use ($levelScores, $userLevelScore) {

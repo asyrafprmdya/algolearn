@@ -51,7 +51,7 @@ class PretestController extends Controller
 
         $dbUser = User::find($user->id);
         $dbUser->level = $kasta;
-        $dbUser->pretest_completed = 1;
+        $dbUser->has_completed_pretest = true;
         $dbUser->save(); 
 
         return redirect()->route('student.pretest.result')->with('score', $score);

@@ -73,7 +73,8 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-3 text-xs">
-                                        @if($student->pretest_completed)
+                                        {{-- Di sini penyakit lu kemaren! Udah gue ganti ke has_completed_pretest --}}
+                                        @if($student->has_completed_pretest)
                                             <span class="text-emerald-600"><i class="fa-solid fa-check-circle mr-1"></i>Selesai</span>
                                         @else
                                             <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i>Belum</span>

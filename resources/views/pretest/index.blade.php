@@ -21,7 +21,7 @@
         currentIndex: 0,
         totalQuestions: {{ count($questions) }},
         answers: {},
-        timeLeft: 1800, // 30 Menit dalam detik (30 * 60)
+        timeLeft: 600,
         timerInterval: null,
         questionIds: [
             @foreach($questions as $q)
@@ -43,7 +43,6 @@
                     this.timeLeft--;
                 } else {
                     clearInterval(this.timerInterval);
-                    // Waktu habis! Auto kumpul tanpa ampun
                     document.getElementById('pretestForm').submit();
                 }
             }, 1000);
@@ -59,7 +58,6 @@
     }"
     x-init="startTimer()">
 
-    <!-- Header & Progress Bar -->
     <header class="bg-white px-6 py-5 flex items-center sticky top-0 z-40 max-w-5xl mx-auto w-full border-b border-slate-100">
         <form action="{{ route('logout') }}" method="POST" class="mr-4">
             @csrf
@@ -74,7 +72,6 @@
             </div>
         </div>
         
-        <!-- Timer yang jalan beneran -->
         <div class="font-black shrink-0 flex items-center px-3 py-1.5 rounded-xl border transition-all duration-300"
              :class="timeLeft <= 60 ? 'bg-red-100 text-red-600 border-red-300 animate-pulse scale-110 shadow-lg shadow-red-200' : 'bg-amber-50 text-amber-500 border-amber-200'">
             <i class="fa-solid fa-hourglass-half mr-2"></i> 
@@ -82,7 +79,6 @@
         </div>
     </header>
 
-    <!-- Konten Soal -->
     <main class="flex-grow w-full max-w-3xl mx-auto py-8 px-6 flex flex-col justify-center relative">
         <form id="pretestForm" action="{{ route('student.pretest.store') }}" method="POST" class="w-full pb-24">
             @csrf
@@ -125,7 +121,6 @@
         </form>
     </main>
 
-    <!-- Footer / Area Tombol Lanjut -->
     <footer class="fixed bottom-0 left-0 w-full bg-white border-t-2 border-slate-200 p-4 sm:p-6 z-40">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             
@@ -133,7 +128,6 @@
                 Soal <span x-text="currentIndex + 1"></span> dari {{ count($questions) }}
             </div>
 
-            <!-- Tombol Lanjut -->
             <button type="button" @click="nextQuestion()" :disabled="!answers[currentQId]" 
                 class="w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-lg uppercase tracking-wider transition-all"
                 :class="answers[currentQId] 

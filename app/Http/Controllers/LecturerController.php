@@ -130,6 +130,14 @@ class LecturerController extends Controller
 
     public function storeQuiz(Request $request, Material $material)
     {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'passing_grade' => 'required|integer|min:0|max:100',
+            'category' => 'required|in:practice,evaluation',
+            'questions' => 'required|array|min:1',
+            'questions.*.question_text' => 'required|string',
+        ]);
+
         $quiz = Quiz::create([
             'material_id' => $material->id,
             'title' => $request->title,
@@ -151,6 +159,7 @@ class LecturerController extends Controller
                     'option_d' => $isArrange ? '-' : ($q['option_d'] ?? '-'),
                     'options' => $isArrange ? ($q['options_arrange'] ?? null) : null,
                     'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? null),
+                    'explanation' => $q['explanation'] ?? null,
                 ]);
             }
         }
@@ -201,19 +210,11 @@ class LecturerController extends Controller
                 'option_d' => $isArrange ? '-' : ($q['option_d'] ?? '-'),
                 'options' => $isArrange ? ($q['options_arrange'] ?? null) : null,
                 'correct_option' => $isArrange ? ($q['correct_option_arrange'] ?? null) : ($q['correct_option_mc'] ?? $q['correct_option'] ?? null),
+                'explanation' => $q['explanation'] ?? null,
             ]);
         }
 
         return redirect()->route('lecturer.quiz.index');
-    }
-
-    public function destroyQuiz(Quiz $quiz)
-    {
-        QuizResult::where('quiz_id', $quiz->id)->delete();
-        $quiz->questions()->delete(); 
-        $quiz->delete();
-        
-        return redirect()->back();
     }
 
     public function indexPretest()
@@ -259,14 +260,19 @@ class LecturerController extends Controller
         $pretest->delete();
         return back();
     }
+
     public function resetStudent($id)
     {
         $student = \App\Models\User::findOrFail($id);
         
         \App\Models\QuizResult::where('user_id', $student->id)->delete();
         
-        $student->update(['level' => 'Belum']);
+        $student->update([
+            'level' => 'Belum',
+            'has_completed_pretest' => false,
+            'completed_contents' => null
+        ]);
 
-        return redirect()->back()->with('success', 'Dosa maba berhasil di-reset. Dia balik jadi cupu lagi!');
+        return redirect()->back()->with('success', 'Dosa maba berhasil di-reset mutlak. Suruh dia pretest ulang!');
     }
 }

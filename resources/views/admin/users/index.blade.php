@@ -8,12 +8,20 @@
     .animate-fade-in-up {
         animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 </style>
 
 <div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ 
     showDeleteModal: false, deleteUrl: '', deleteName: '',
     showEditModal: false, editUrl: '', editName: '', editEmail: '', editRole: 'student',
-    showImportModal: false 
+    showImportModal: false, showFilterModal: false,
+    filterRole: '{{ request('role') }}', filterRoleLabel: '{{ request('role') === 'student' ? 'Mahasiswa' : (request('role') === 'lecturer' ? 'Dosen' : (request('role') === 'admin' ? 'Admin' : 'Semua Peran')) }}',
+    filterLevel: '{{ request('level') }}', filterLevelLabel: '{{ request('level') ? 'Level - ' . request('level') : 'Semua Level' }}',
+    filterStatus: '{{ request('status') }}', filterStatusLabel: '{{ request('status') === 'active' ? 'Aktif' : (request('status') === 'inactive' ? 'Nonaktif' : 'Semua Status') }}',
+    editRoleLabel: 'Mahasiswa',
+    openFilterRole: false, openFilterLevel: false, openFilterStatus: false, openEditRole: false
 }">
     @include('admin.partials.sidebar')
 
@@ -67,6 +75,11 @@
                         <p class="text-sm text-slate-500">Total {{ $users->total() }} pengguna terdaftar</p>
                     </div>
                     <div class="flex gap-2 flex-wrap">
+                        <button @click="showFilterModal = true"
+                                class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-100 flex items-center space-x-1.5 transition-colors shadow-sm">
+                            <i class="fa-solid fa-filter"></i>
+                            <span>Filter Data</span>
+                        </button>
                         <button @click="showImportModal = true"
                                 class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center space-x-1.5 transition-colors">
                             <i class="fa-solid fa-file-import"></i>
@@ -79,51 +92,6 @@
                         </a>
                     </div>
                 </div>
-
-                <form method="GET" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Cari</label>
-                            <input type="text" name="search" value="{{ request('search') }}"
-                                   placeholder="Nama atau email..."
-                                   class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Peran</label>
-                            <select name="role" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                                <option value="">Semua Peran</option>
-                                <option value="student" @selected(request('role') === 'student')>Mahasiswa</option>
-                                <option value="lecturer" @selected(request('role') === 'lecturer')>Dosen</option>
-                                <option value="admin" @selected(request('role') === 'admin')>Admin</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Level</label>
-                            <select name="level" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                                <option value="">Semua Level</option>
-                                <option value="Pemula" @selected(request('level') === 'Pemula')>Level 1 - Pemula</option>
-                                <option value="Menengah" @selected(request('level') === 'Menengah')>Level 2 - Menengah</option>
-                                <option value="Lanjutan" @selected(request('level') === 'Lanjutan')>Level 3 - Lanjutan</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                            <select name="status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                                <option value="">Semua Status</option>
-                                <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                                <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex gap-2">
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Filter
-                        </button>
-                        <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                            Reset
-                        </a>
-                    </div>
-                </form>
 
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
@@ -165,7 +133,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-slate-600 text-xs">{{ $user->level ?: '-' }}</td>
                                     <td class="px-6 py-4">
-                                        @if($user->pretest_completed)
+                                        @if($user->has_completed_pretest)
                                             <span class="text-emerald-600 text-xs"><i class="fa-solid fa-check"></i> Selesai</span>
                                         @else
                                             <span class="text-slate-400 text-xs"><i class="fa-regular fa-clock"></i> Belum</span>
@@ -186,6 +154,7 @@
                                                     editName = '{{ addslashes($user->name) }}';
                                                     editEmail = '{{ addslashes($user->email) }}';
                                                     editRole = '{{ $user->role }}';
+                                                    editRoleLabel = editRole === 'student' ? 'Mahasiswa' : (editRole === 'lecturer' ? 'Dosen' : 'Admin');
                                                     showEditModal = true;
                                                 "
                                                 class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit Cepat">
@@ -234,6 +203,76 @@
         </div>
     </main>
 
+    <div x-show="showFilterModal" class="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition>
+        <div class="bg-white rounded-2xl w-full max-w-lg p-6 relative z-[1000] shadow-2xl border border-slate-100" @click.away="showFilterModal = false">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <h3 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-filter text-indigo-500 mr-2"></i>Filter Pencarian</h3>
+                <button @click="showFilterModal = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <form method="GET" action="{{ route('admin.users.index') }}" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Pencarian Nama / Email</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Ketik nama atau email..." class="w-full border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                </div>
+                
+                <div class="relative" @click.outside="openFilterRole = false">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Peran Pengguna</label>
+                    <button type="button" @click="openFilterRole = !openFilterRole" class="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors">
+                        <span x-text="filterRoleLabel"></span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" :class="openFilterRole ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openFilterRole" style="display: none;" class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                        <button type="button" @click="filterRole = ''; filterRoleLabel = 'Semua Peran'; openFilterRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Semua Peran</button>
+                        <button type="button" @click="filterRole = 'student'; filterRoleLabel = 'Mahasiswa'; openFilterRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Mahasiswa</button>
+                        <button type="button" @click="filterRole = 'lecturer'; filterRoleLabel = 'Dosen'; openFilterRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Dosen</button>
+                        <button type="button" @click="filterRole = 'admin'; filterRoleLabel = 'Admin'; openFilterRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Admin</button>
+                    </div>
+                    <input type="hidden" name="role" :value="filterRole">
+                </div>
+
+                <div class="relative" @click.outside="openFilterLevel = false">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Kasta / Level Maba</label>
+                    <button type="button" @click="openFilterLevel = !openFilterLevel" class="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors">
+                        <span x-text="filterLevelLabel"></span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" :class="openFilterLevel ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openFilterLevel" style="display: none;" class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                        <button type="button" @click="filterLevel = ''; filterLevelLabel = 'Semua Level'; openFilterLevel = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Semua Level</button>
+                        <button type="button" @click="filterLevel = 'Pemula'; filterLevelLabel = 'Level - Pemula'; openFilterLevel = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Level 1 - Pemula</button>
+                        <button type="button" @click="filterLevel = 'Menengah'; filterLevelLabel = 'Level - Menengah'; openFilterLevel = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Level 2 - Menengah</button>
+                        <button type="button" @click="filterLevel = 'Lanjutan'; filterLevelLabel = 'Level - Lanjutan'; openFilterLevel = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Level 3 - Lanjutan</button>
+                    </div>
+                    <input type="hidden" name="level" :value="filterLevel">
+                </div>
+
+                <div class="relative" @click.outside="openFilterStatus = false">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Status Akun</label>
+                    <button type="button" @click="openFilterStatus = !openFilterStatus" class="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors">
+                        <span x-text="filterStatusLabel"></span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" :class="openFilterStatus ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openFilterStatus" style="display: none;" class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                        <button type="button" @click="filterStatus = ''; filterStatusLabel = 'Semua Status'; openFilterStatus = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Semua Status</button>
+                        <button type="button" @click="filterStatus = 'active'; filterStatusLabel = 'Aktif'; openFilterStatus = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Aktif</button>
+                        <button type="button" @click="filterStatus = 'inactive'; filterStatusLabel = 'Nonaktif'; openFilterStatus = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Nonaktif</button>
+                    </div>
+                    <input type="hidden" name="status" :value="filterStatus">
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-slate-100 mt-6">
+                    <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm">
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Terapkan Filter
+                    </button>
+                    <a href="{{ route('admin.users.index') }}" class="flex-1 py-2.5 bg-slate-100 text-slate-600 text-center rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
+                        Reset Semua
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div x-show="showEditModal" class="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition>
         <div class="bg-white rounded-2xl w-full max-w-md p-6 relative z-[1000] shadow-2xl border border-slate-100" @click.away="showEditModal = false">
             <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
@@ -252,14 +291,21 @@
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Email <span class="text-red-500">*</span></label>
                     <input type="email" name="email" x-model="editEmail" required class="w-full border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
                 </div>
-                <div>
+                
+                <div class="relative" @click.outside="openEditRole = false">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Peran <span class="text-red-500">*</span></label>
-                    <select name="role" x-model="editRole" class="w-full border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                        <option value="student">Mahasiswa</option>
-                        <option value="lecturer">Dosen</option>
-                        <option value="admin">Admin</option>
-                    </select>
+                    <button type="button" @click="openEditRole = !openEditRole" class="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors">
+                        <span x-text="editRoleLabel"></span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" :class="openEditRole ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openEditRole" style="display: none;" class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                        <button type="button" @click="editRole = 'student'; editRoleLabel = 'Mahasiswa'; openEditRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Mahasiswa</button>
+                        <button type="button" @click="editRole = 'lecturer'; editRoleLabel = 'Dosen'; openEditRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Dosen</button>
+                        <button type="button" @click="editRole = 'admin'; editRoleLabel = 'Admin'; openEditRole = false" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">Admin</button>
+                    </div>
+                    <input type="hidden" name="role" :value="editRole">
                 </div>
+
                 <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 mt-2">
                     <p class="text-xs font-medium text-slate-600 mb-2"><i class="fa-solid fa-lock text-slate-400 mr-1"></i>Ganti Password (opsional)</p>
                     <div class="space-y-2">

@@ -75,16 +75,41 @@
                             <div class="w-10 h-10 shrink-0 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black">{{ $index + 1 }}</div>
                             <h3 class="text-lg font-bold text-slate-800 pt-1">{{ $q->question_text }}</h3>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-14">
-                            @foreach(['a','b','c','d'] as $opt)
-                            @php $isCorrect = $q->correct_option == $opt; @endphp
-                            <div class="p-3 rounded-xl border-2 {{ $isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-100 bg-white text-slate-600 font-medium' }} flex items-center space-x-3">
-                                <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black uppercase {{ $isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500' }}">{{ $opt }}</div>
-                                <span class="text-sm">{{ $q->{'option_'.$opt} }}</span>
-                                @if($isCorrect) <i class="fa-solid fa-check-circle ml-auto text-emerald-500 text-lg"></i> @endif
+                        
+                        @if($q->type == 'arrange')
+                            <div class="pl-14 mb-4">
+                                <div class="bg-slate-50 border-2 border-dashed border-slate-300 p-4 rounded-xl flex flex-wrap gap-2">
+                                    @foreach(explode(',', $q->options) as $opt)
+                                        <span class="px-3 py-1 bg-amber-100 text-amber-800 font-mono text-xs rounded-lg font-bold border border-amber-200">{{ trim($opt) }}</span>
+                                    @endforeach
+                                </div>
+                                <div class="mt-2 text-sm font-bold text-emerald-600 flex items-center gap-2">
+                                    <i class="fa-solid fa-check-double"></i> Kunci: <span class="font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">{{ $q->correct_option }}</span>
+                                </div>
                             </div>
-                            @endforeach
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-14">
+                                @foreach(['a','b','c','d'] as $opt)
+                                @php $isCorrect = $q->correct_option == $opt; @endphp
+                                <div class="p-3 rounded-xl border-2 {{ $isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-100 bg-white text-slate-600 font-medium' }} flex items-center space-x-3">
+                                    <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black uppercase {{ $isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500' }}">{{ $opt }}</div>
+                                    <span class="text-sm">{{ $q->{'option_'.$opt} }}</span>
+                                    @if($isCorrect) <i class="fa-solid fa-check-circle ml-auto text-emerald-500 text-lg"></i> @endif
+                                </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="mt-4 pl-14">
+                            <div class="p-4 rounded-xl border-2 border-indigo-100 bg-indigo-50 flex items-start space-x-3">
+                                <i class="fa-solid fa-lightbulb text-indigo-500 mt-0.5"></i>
+                                <div>
+                                    <span class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Penjelasan GM</span>
+                                    <p class="text-sm font-medium text-indigo-900 leading-relaxed">{{ $q->explanation ?? 'GM belum ngasih penjelasan buat soal ini.' }}</p>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                     @endforeach
                 </div>

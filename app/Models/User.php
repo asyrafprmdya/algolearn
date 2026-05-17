@@ -18,6 +18,7 @@ class User extends Authenticatable
         'level',
         'completed_contents',
         'has_completed_pretest',
+        'is_active', 
     ];
 
     protected $hidden = [

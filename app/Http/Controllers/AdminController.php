@@ -7,7 +7,9 @@ use App\Models\User;
 use App\Models\Material;
 use App\Models\Quiz;
 use App\Models\Pretest;
+use App\Models\QuizResult;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -203,7 +205,11 @@ class AdminController extends Controller
             'autosave_interval_seconds' => 'required|numeric|min:10|max:120',
         ]);
 
-        return back()->with('success', 'Konfigurasi sistem berhasil di-update!');
+        foreach ($request->except(['_token', '_method']) as $key => $value) {
+            DB::table('system_configs')->updateOrInsert(['key' => $key], ['value' => $value]);
+        }
+
+        return back()->with('success', 'Konfigurasi sistem berhasil di-update secara mutlak!');
     }
 
     public function reports()
@@ -216,6 +222,18 @@ class AdminController extends Controller
 
     public function exportReport()
     {
-        return back();
+        $results = QuizResult::with(['user', 'quiz'])->get();
+        
+        $csv = "Nama Mahasiswa,Kuis,Skor,Status\n";
+        foreach($results as $r) {
+            $status = $r->is_passed ? 'Lulus' : 'Gagal';
+            $nama = $r->user->name ?? 'Unknown';
+            $kuis = $r->quiz->title ?? 'Unknown';
+            $csv .= "{$nama},{$kuis},{$r->score},{$status}\n";
+        }
+
+        return response($csv)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="Laporan_AlgoLearn_'.date('Ymd').'.csv"');
     }
 }

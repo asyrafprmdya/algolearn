@@ -23,7 +23,8 @@
                 'd' => $q->option_d !== '-' ? $q->option_d : '',
                 'answer' => $q->type === 'multiple_choice' ? $q->correct_option : 'a',
                 'options_arrange' => $q->options ?? '',
-                'correct_option_arrange' => $q->type === 'arrange' ? $q->correct_option : '',
+                'correct_option_arrange' => $q->type === 'arrange' ? str_replace(' ', ',', $q->correct_option) : '',
+                'explanation' => $q->explanation ?? '',
             ];
         });
     @endphp
@@ -88,7 +89,7 @@
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-100" x-data="{
         questions: @js($mappedQuestions),
         activeModalId: null,
-        addQuestion() { this.questions.push({ id: Date.now(), text: '', type: 'multiple_choice', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '' }); },
+        addQuestion() { this.questions.push({ id: Date.now(), text: '', type: 'multiple_choice', a: '', b: '', c: '', d: '', answer: 'a', options_arrange: '', correct_option_arrange: '', explanation: '' }); },
         removeQuestion(id) { this.questions = this.questions.filter(q => q.id !== id); }
     }">
         <header class="h-20 flex justify-end items-center px-8 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur-md z-10">
@@ -288,12 +289,23 @@
                                         <div>
                                             <label class="flex items-center space-x-2 text-xs font-black text-emerald-800 uppercase mb-3 tracking-widest ml-1">
                                                 <i class="fa-solid fa-check-double text-emerald-500 text-lg"></i>
-                                                <span>Susunan Jawaban Valid (Pisahkan dengan Spasi)</span>
+                                                <span>Susunan Jawaban Valid (Pisahkan dengan Koma)</span>
                                             </label>
-                                            <input type="text" x-bind:name="'questions['+index+'][correct_option_arrange]'" x-model="q.correct_option_arrange" placeholder="int main() { cout << return 0; }" class="w-full px-6 py-5 rounded-2xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 font-mono text-sm text-emerald-900 font-black transition-all shadow-inner bg-emerald-50">
-                                            <p class="text-xs text-emerald-600 mt-3 font-bold ml-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Penting: Pastikan spasi dan teks sama persis dengan urutan balok yang benar.</p>
+                                            <input type="text" x-bind:name="'questions['+index+'][correct_option_arrange]'" x-model="q.correct_option_arrange" placeholder="int,main(),{,cout <<,return 0;,}" class="w-full px-6 py-5 rounded-2xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 font-mono text-sm text-emerald-900 font-black transition-all shadow-inner bg-emerald-50">
+                                            <p class="text-xs text-emerald-600 mt-3 font-bold ml-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Penting: Pastikan koma dan teks sama persis dengan urutan balok yang benar.</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="mt-8 p-6 bg-indigo-50 border-2 border-indigo-100 rounded-2xl relative">
+                                    <div class="absolute -top-3 left-6 px-3 py-0.5 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                                        Feedback Mahasiswa
+                                    </div>
+                                    <label class="flex items-center space-x-2 text-xs font-black text-indigo-800 uppercase mb-3 tracking-widest ml-1 mt-2">
+                                        <i class="fa-solid fa-lightbulb text-indigo-500 text-lg"></i>
+                                        <span>Penjelasan Jawaban (Opsional)</span>
+                                    </label>
+                                    <textarea x-bind:name="'questions['+index+'][explanation]'" x-model="q.explanation" rows="2" class="w-full px-6 py-4 rounded-xl border-2 border-indigo-200 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 text-indigo-900 font-medium text-sm transition-all resize-none shadow-inner bg-white" placeholder="Jelasin kenapa jawabannya itu, biar maba lu kaga protes..."></textarea>
                                 </div>
 
                             </div>
