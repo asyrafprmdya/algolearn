@@ -135,7 +135,8 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-3">
-                                            @if($user->pretest_completed)
+                                            {{-- INI PENYAKIT HALU LU, UDAH GUE BENERIN! --}}
+                                            @if($user->has_completed_pretest)
                                                 <span class="text-emerald-600"><i class="fa-solid fa-check-circle"></i> Selesai</span>
                                             @else
                                                 <span class="text-slate-400"><i class="fa-regular fa-clock"></i> Belum</span>

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Material;
 use App\Models\Quiz;
-use App\Models\Pretest;
+use App\Models\PretestQuestion;
 use App\Models\QuizResult;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +21,8 @@ class AdminController extends Controller
             'total_students' => User::where('role', 'student')->count(),
             'total_materials' => Material::count(), 
             'total_quizzes' => Quiz::count(), 
-            'total_pretests' => Pretest::count(), 
-            'total_pretes' => Pretest::count(), 
+            'total_pretests' => PretestQuestion::count(), 
+            'total_pretes' => User::where('role', 'student')->where('has_completed_pretest', true)->count(), 
             'remedial_active' => 0, 
         ];
 
@@ -220,20 +220,33 @@ class AdminController extends Controller
         return view('admin.reports.index', compact('students', 'remedials'));
     }
 
-    public function exportReport()
+    public function exportReport(Request $request)
     {
-        $results = QuizResult::with(['user', 'quiz'])->get();
+        $type = $request->query('type', 'students');
         
-        $csv = "Nama Mahasiswa,Kuis,Skor,Status\n";
-        foreach($results as $r) {
-            $status = $r->is_passed ? 'Lulus' : 'Gagal';
-            $nama = $r->user->name ?? 'Unknown';
-            $kuis = $r->quiz->title ?? 'Unknown';
-            $csv .= "{$nama},{$kuis},{$r->score},{$status}\n";
+        if ($type === 'students') {
+            $students = User::where('role', 'student')->get();
+            $csv = "Nama,Email,Level,Status Pretest,Status Akun\n";
+            foreach ($students as $s) {
+                $pretest = $s->has_completed_pretest ? 'Selesai' : 'Belum';
+                $status = $s->is_active ? 'Aktif' : 'Nonaktif';
+                $csv .= "{$s->name},{$s->email},{$s->level},{$pretest},{$status}\n";
+            }
+            $filename = "Laporan_Mahasiswa_AlgoLearn_" . date('Ymd') . ".csv";
+        } else {
+            $results = QuizResult::with(['user', 'quiz'])->get();
+            $csv = "Nama Mahasiswa,Kuis,Skor,Status Lulus\n";
+            foreach($results as $r) {
+                $status = $r->is_passed ? 'Lulus' : 'Gagal';
+                $nama = $r->user->name ?? 'Unknown';
+                $kuis = $r->quiz->title ?? 'Unknown';
+                $csv .= "{$nama},{$kuis},{$r->score},{$status}\n";
+            }
+            $filename = "Laporan_NilaiKuis_AlgoLearn_" . date('Ymd') . ".csv";
         }
 
         return response($csv)
             ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="Laporan_AlgoLearn_'.date('Ymd').'.csv"');
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 }
