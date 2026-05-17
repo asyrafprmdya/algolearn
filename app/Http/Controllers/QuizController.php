@@ -11,10 +11,21 @@ use Illuminate\Support\Facades\Auth;
 
 class QuizController extends Controller
 {
-    public function show(Quiz $quiz)
+    public function show(Request $request, Quiz $quiz)
     {
+        // Cek dosa: Apakah maba ini udah pernah ngerjain kuisnya?
+        $hasTaken = QuizResult::where('user_id', Auth::id())->where('quiz_id', $quiz->id)->exists();
+
+        // Kalo udah pernah dan belum ngasih konfirmasi, lempar variabel askRepeat
+        if ($hasTaken && !$request->has('confirm')) {
+            $quiz->load('questions');
+            $askRepeat = true;
+            return view('student.quizzes.show', compact('quiz', 'askRepeat'));
+        }
+
         $quiz->load('questions');
-        return view('student.quizzes.show', compact('quiz'));
+        $askRepeat = false;
+        return view('student.quizzes.show', compact('quiz', 'askRepeat'));
     }
 
     public function submit(Request $request, Quiz $quiz)
@@ -38,11 +49,14 @@ class QuizController extends Controller
             foreach ($questions as $q) {
                 $userAns = $request->input("answers.{$q->id}");
                 if ($q->type === 'arrange') {
-                    if (trim(strtolower($userAns)) === trim(strtolower($q->correct_option))) {
+                    // Anti-typo: bersihin koma dan spasi sebelum dicocokin
+                    $cleanUser = str_replace([' ', ','], '', strtolower(trim($userAns)));
+                    $cleanCorrect = str_replace([' ', ','], '', strtolower(trim($q->correct_option)));
+                    if ($cleanUser === $cleanCorrect) {
                         $score++;
                     }
                 } else {
-                    if (strtolower($userAns) === strtolower($q->correct_option)) {
+                    if (strtolower(trim($userAns)) === strtolower(trim($q->correct_option))) {
                         $score++;
                     }
                 }
@@ -79,19 +93,15 @@ class QuizController extends Controller
     private function handleLevelUp($user, $quiz)
     {
         $currentLevel = $user->getRawLevel();
-        $materialLevel = $quiz->material->level;
+        $materialLevel = $quiz->material->level ?? 'Pemula';
 
         if ($currentLevel === $materialLevel && $quiz->category === 'practice') {
-            
             $materialIds = Material::where('level', $currentLevel)->pluck('id');
-            
             $practiceQuizIds = Quiz::whereIn('material_id', $materialIds)
                                      ->where('category', 'practice')
                                      ->pluck('id');
 
-            if ($practiceQuizIds->isEmpty()) {
-                return;
-            }
+            if ($practiceQuizIds->isEmpty()) return;
 
             $passedPracticeCount = QuizResult::where('user_id', $user->id)
                                             ->whereIn('quiz_id', $practiceQuizIds)
@@ -117,6 +127,8 @@ class QuizController extends Controller
             ->latest()
             ->first();
 
-        return view('student.quizzes.result', compact('quiz', 'result'));
+        // Fallback pinter biar lu kaga nangis karena view error
+        $viewName = view()->exists('student.quizzes.result') ? 'student.quizzes.result' : 'student.quizzes.result';
+        return view($viewName, compact('quiz', 'result'));
     }
 }

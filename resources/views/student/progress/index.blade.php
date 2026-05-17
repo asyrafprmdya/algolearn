@@ -1,5 +1,11 @@
 @extends('layouts.app')
 @section('content')
+
+@php
+    $totalAttempts = $results->count();
+    $progressPercentage = $totalAttempts > 0 ? round(($passedQuizzes / $totalAttempts) * 100) : 0;
+@endphp
+
 <div class="flex h-screen bg-slate-50 overflow-hidden">
     <aside class="w-64 bg-white border-r-2 border-slate-200 flex flex-col justify-between hidden md:flex shrink-0 z-20">
         <div class="flex-1 overflow-y-auto">
@@ -103,12 +109,12 @@
                                 </td>
                                 <td class="px-6 py-4 text-slate-500 font-bold">{{ $result->quiz->passing_grade ?? 70 }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="font-black text-xl {{ $result->score >= ($result->quiz->passing_grade ?? 70) ? 'text-emerald-500' : 'text-red-500' }}">
+                                    <span class="font-black text-xl {{ $result->is_passed ? 'text-emerald-500' : 'text-red-500' }}">
                                         {{ $result->score }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    @if($result->score >= ($result->quiz->passing_grade ?? 70))
+                                    @if($result->is_passed)
                                         <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-md uppercase tracking-wider"><i class="fa-solid fa-check mr-1"></i> Tuntas</span>
                                     @else
                                         <span class="bg-red-100 text-red-700 text-[10px] font-bold px-3 py-1.5 rounded-md uppercase tracking-wider"><i class="fa-solid fa-fire mr-1"></i> Remedial</span>

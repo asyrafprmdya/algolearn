@@ -12,6 +12,27 @@
     });
 @endphp
 
+@if(isset($askRepeat) && $askRepeat)
+    <div class="fixed inset-0 z-[99999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" x-data="{show: true}" x-show="show">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl border-4 border-amber-400 text-center">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i class="fa-solid fa-rotate-right text-4xl"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Ulangi Kuis?</h3>
+            <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">Lu udah pernah ngerjain kuis ini lek! Yakin mau ngulang? Keringat lu yang kemaren tetep kecatet sih, tapi menuuh-menuhin <i>database</i> GM doang.</p>
+            
+            <div class="flex gap-3">
+                <a href="{{ route('student.quiz.show', ['quiz' => $quiz->id, 'confirm' => 1]) }}" class="flex-1 py-4 bg-amber-500 text-white font-black uppercase tracking-widest rounded-xl shadow-[0_4px_0_0_#d97706] hover:translate-y-[2px] hover:shadow-none transition-all text-xs flex items-center justify-center">
+                    Gaskeun Ulang
+                </a>
+                <a href="{{ route('student.tasks.index') }}" class="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all text-xs flex items-center justify-center">
+                    Balik Markas
+                </a>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="h-screen flex flex-col bg-white overflow-hidden" x-data="quizApp">
     
     <header class="w-full px-6 py-8 flex items-center justify-between max-w-5xl mx-auto gap-6 shrink-0 z-50 bg-white">

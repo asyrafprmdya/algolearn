@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\QuizResult;
-use App\Models\Quiz;
+use Illuminate\Support\Facades\Auth;
 
 class ProgressController extends Controller
 {
@@ -13,19 +12,15 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
         
+        // Ambil semua hasil kuis mahasiswa
         $results = QuizResult::with('quiz.material')
-            ->where('user_id', $user->id)
-            ->orderBy('updated_at', 'desc')
-            ->get();
-            
-        $totalQuizzes = Quiz::count();
-        
-        $passedQuizzes = $results->filter(function($result) {
-            return $result->score >= ($result->quiz->passing_grade ?? 70);
-        })->count();
-        
-        $progressPercentage = $totalQuizzes > 0 ? round(($passedQuizzes / $totalQuizzes) * 100) : 0;
+                    ->where('user_id', $user->id)
+                    ->latest()
+                    ->get();
 
-        return view('student.progress.index', compact('user', 'results', 'progressPercentage'));
+        // Mutlak: Pake kolom is_passed langsung dari database (kaga ngitung manual lagi)
+        $passedQuizzes = $results->where('is_passed', true)->count();
+        
+        return view('student.progress.index', compact('results', 'passedQuizzes'));
     }
 }
