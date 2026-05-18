@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -33,24 +34,34 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            $user = Auth::user();
+        $throttleKey = strtolower($request->email) . '|' . $request->ip();
 
-            return match ($user->role) {
-                'admin' => redirect()->route('admin.dashboard'),
-                'lecturer' => redirect()->route('lecturer.dashboard'),
-                'student' => redirect()->route('student.dashboard'),
-                default => abort(403, 'Role tidak valid.'),
-            };
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->with('throttle_warning', "Terdeteksi spam massal! Jari lu kecepatan lek, tunggu $seconds detik lagi baru coba masuk.");
         }
 
-        return back()->with('error', 'Email atau password salah.');
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            RateLimiter::clear($throttleKey);
+            $request->session()->regenerate();
+            
+            $role = Auth::user()->role;
+            if ($role === 'admin') return redirect()->route('admin.dashboard');
+            if ($role === 'lecturer') return redirect()->route('lecturer.dashboard');
+            
+            return redirect()->route('student.dashboard');
+        }
+
+        RateLimiter::hit($throttleKey, 60);
+
+        return back()->withErrors([
+            'email' => 'Email atau password lu salah lek!',
+        ])->withInput();
     }
 
     public function logout(Request $request)

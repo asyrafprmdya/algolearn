@@ -42,6 +42,22 @@
     </div>
 </div>
 @endif
+
+@if(session('throttle_warning'))
+<div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-[99999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-8 relative shadow-2xl border-4 border-red-500 text-center" @click.away="show = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+        <div class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg rotate-12">
+            <i class="fa-solid fa-hand text-5xl -rotate-12"></i>
+        </div>
+        <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Santai Dulu Lek!</h3>
+        <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">{{ session('throttle_warning') }}</p>
+        <button type="button" @click="show = false" class="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#b91c1c] active:translate-y-[4px] active:shadow-none transition-all text-sm">
+            Iya Bang Ampun
+        </button>
+    </div>
+</div>
+@endif
+
 <div class="flex min-h-screen bg-slate-50 font-sans">
     
     <div class="hidden lg:flex flex-col justify-center items-center w-1/2 bg-[#0b276b] text-white p-12 relative overflow-hidden">

@@ -131,6 +131,7 @@
                         <input type="password" name="password_confirmation" class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 text-slate-800 font-medium transition-all text-lg" placeholder="Ketik ulang sandinya" required>
                     </div>
                 </div>
+                
 
                 <div class="pt-4">
                     <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg py-4 px-6 rounded-2xl uppercase tracking-wider transition-all shadow-[0_6px_0_0_#059669] hover:shadow-[0_2px_0_0_#059669] hover:translate-y-[4px] flex justify-center items-center space-x-2">
