@@ -2,19 +2,25 @@
 @section('content')
 @php
     $user = Illuminate\Support\Facades\Auth::user();
+    $currentLevel = $user->level; 
     
-    $totalQuizzes = \App\Models\Quiz::where('category', 'practice')->count();
+    $materialIds = \App\Models\Material::where('level', $currentLevel)->pluck('id');
+    
+    $totalQuizzes = \App\Models\Quiz::where('category', 'practice')
+        ->whereIn('material_id', $materialIds)
+        ->count();
 
     $passedQuizzes = \App\Models\QuizResult::where('user_id', $user->id)
         ->where('is_passed', true)
-        ->whereHas('quiz', function($query) {
-            $query->where('category', 'practice');
+        ->whereHas('quiz', function($query) use ($materialIds) {
+            $query->where('category', 'practice')
+                  ->whereIn('material_id', $materialIds);
         })
         ->pluck('quiz_id')
         ->unique()
         ->count();
 
-    $totalMaterials = \App\Models\Material::count();
+    $totalMaterials = $materialIds->count();
 
     $progress = $totalQuizzes > 0 ? round(($passedQuizzes / $totalQuizzes) * 100) : 0;
 @endphp
@@ -84,7 +90,7 @@
                 
                 <a href="{{ route('student.tasks.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
                     <i class="fa-solid fa-clipboard-list w-6 text-center text-lg {{ request()->routeIs('student.tasks.*', 'student.quiz.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
-                    <span>Latihan</span>
+                    <span>Evaluasi</span>
                 </a>
                 
                 <a href="{{ route('student.progress.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all group {{ request()->routeIs('student.progress.index') ? 'bg-[#0b276b] text-white shadow-[0_4px_0_0_#061a4f] translate-y-[-2px]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0b276b]' }}">
@@ -139,7 +145,7 @@
                             <div class="w-10 h-10 rounded-full bg-blue-50 text-[#0b276b] flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
                                 <i class="fa-solid fa-route"></i>
                             </div>
-                            Perjalanan Belajarmu
+                            Perjalanan Level {{ $currentLevel }}
                         </h3>
                         
                         <div class="flex justify-between items-end mb-3">
@@ -164,7 +170,7 @@
                             <i class="fa-solid fa-book-bookmark"></i>
                         </div>
                         <h4 class="text-4xl font-black text-slate-800">{{ $totalMaterials }}</h4>
-                        <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Materi Tersedia</p>
+                        <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Materi Level Ini</p>
                     </div>
 
                 </div>

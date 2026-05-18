@@ -9,7 +9,12 @@
     .floating { animation: float 3s ease-in-out infinite; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ showLevelUp: false, showNoQuizModal: false }">
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ 
+    showLevelUp: {{ session('level_up') ? 'true' : 'false' }}, 
+    showNoQuizModal: false, 
+    showDoneModal: {{ session('already_passed') ? 'true' : 'false' }},
+    showLockedModal: {{ session('locked_warning') ? 'true' : 'false' }}
+}">
     <aside class="w-64 bg-white border-r-2 border-slate-200 flex flex-col justify-between hidden md:flex shrink-0 z-20">
         <div class="flex-1 overflow-y-auto">
             <div class="h-20 flex items-center px-6 border-b-2 border-slate-100 mb-4 sticky top-0 bg-white/90 backdrop-blur-sm z-10">
@@ -82,11 +87,13 @@
                         'Lanjutan' => ['color' => 'purple', 'bg' => 'bg-purple-500', 'border' => 'border-purple-700', 'icon' => 'fa-crown', 'rank' => 3]
                     ];
                     
-                    $canUnlockNextNode = true; 
+                    $rawCompleted = Auth::user()->completed_contents;
+                    $completedArray = is_array($rawCompleted) ? $rawCompleted : (json_decode($rawCompleted, true) ?? []);
                 @endphp
 
                 @foreach($sections as $levelName => $theme)
                     @php
+                        $canUnlockNextNode = true; 
                         $isSectionLocked = $theme['rank'] > $userRank;
                         $headerBg = $isSectionLocked ? 'bg-slate-400' : $theme['bg'];
                         $headerBorder = $isSectionLocked ? 'border-slate-500' : $theme['border'];
@@ -107,9 +114,7 @@
 
                             @forelse($units as $index => $unit)
                                 @php
-                                    $completedArray = is_array($completedMaterialIds) ? $completedMaterialIds : [];
                                     $isDone = in_array($unit->id, $completedArray);
-                                    
                                     $isLocked = $isSectionLocked || !$canUnlockNextNode;
                                     
                                     if (!$isDone) {
@@ -117,23 +122,39 @@
                                     }
 
                                     $zigzag = ($index % 2 == 0) ? 'mr-24' : 'ml-24';
-                                    
                                     $quiz = $unit->quizzes->first();
+
+                                    $isRemedial = false;
+                                    if ($quiz && !$isDone && !$isLocked) {
+                                        $isRemedial = \App\Models\QuizResult::where('user_id', Auth::id())
+                                            ->where('quiz_id', $quiz->id)
+                                            ->exists();
+                                    }
                                 @endphp
 
                                 <div class="relative z-10 {{ $zigzag }}">
                                     @if($isLocked)
-                                        <div class="level-node locked w-24 h-24 bg-slate-200 rounded-full border-b-8 border-slate-300 flex items-center justify-center shadow-lg">
+                                        <div class="level-node locked w-24 h-24 bg-slate-200 rounded-full border-b-8 border-slate-300 flex items-center justify-center shadow-lg cursor-not-allowed" @click="showLockedModal = true">
                                             <i class="fa-solid fa-lock text-slate-400 text-3xl"></i>
                                         </div>
                                     @else
                                         <div class="relative">
                                             @if($quiz)
-                                                <a href="{{ route('student.quiz.show', $quiz->id) }}" 
-                                                   class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all
-                                                   {{ $isDone ? 'bg-emerald-500 border-emerald-700' : $theme['bg'].' '.$theme['border'] }}">
-                                                    <i class="fa-solid {{ $isDone ? 'fa-check' : 'fa-star' }} text-white text-3xl"></i>
-                                                </a>
+                                                @if($isDone)
+                                                    <button type="button" @click="showDoneModal = true" class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all bg-emerald-500 border-emerald-700 cursor-not-allowed">
+                                                        <i class="fa-solid fa-check text-white text-3xl"></i>
+                                                    </button>
+                                                @elseif($isRemedial)
+                                                    <a href="{{ route('student.quiz.show', $quiz->id) }}" 
+                                                       class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all bg-amber-500 border-amber-700 animate-pulse-soft" title="Remedial / Coba Lagi">
+                                                        <i class="fa-solid fa-fire text-white text-3xl"></i>
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('student.quiz.show', $quiz->id) }}" 
+                                                       class="level-node w-24 h-24 rounded-full border-b-8 flex items-center justify-center shadow-xl transition-all {{ $theme['bg'].' '.$theme['border'] }}">
+                                                        <i class="fa-solid fa-star text-white text-3xl"></i>
+                                                    </a>
+                                                @endif
                                             @else
                                                 <button type="button" @click="showNoQuizModal = true" class="level-node w-24 h-24 bg-slate-300 rounded-full border-b-8 border-slate-400 flex items-center justify-center shadow-lg cursor-not-allowed">
                                                     <i class="fa-solid fa-person-digging text-slate-500 text-3xl"></i>
@@ -142,7 +163,7 @@
                                             <div class="absolute top-1/2 {{ ($index % 2 == 0) ? 'left-full ml-6' : 'right-full mr-6' }} -translate-y-1/2 bg-white px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-sm whitespace-nowrap">
                                                 <p class="text-sm font-black text-slate-800">{{ $unit->title }}</p>
                                                 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1">
-                                                    <div class="{{ $isDone ? 'w-full' : 'w-0' }} bg-emerald-500 h-1.5 rounded-full"></div>
+                                                    <div class="{{ $isDone ? 'w-full bg-emerald-500' : ($isRemedial ? 'w-1/2 bg-amber-500' : 'w-0 bg-emerald-500') }} h-1.5 rounded-full transition-all duration-500"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -179,6 +200,32 @@
                 <p class="text-slate-500 font-bold mb-8 leading-relaxed text-sm">GM alias dosen lu belum nyiapin soal latihan buat materi ini. Mending lu tagih ke orangnya langsung biar kerjanya cepet!</p>
                 <button @click="showNoQuizModal = false" class="w-full py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
                     Oke, Gue Tungguin
+                </button>
+            </div>
+        </div>
+
+        <div x-show="showDoneModal" class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-8 relative shadow-2xl border-4 border-emerald-500 text-center" @click.away="showDoneModal = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i class="fa-solid fa-check-double text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Udah Lulus Lek!</h3>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed text-sm">Lu udah sukses naklukin misi ini. Kaga usah maruk ngulang-ngulang, mending lu lanjut ke misi selanjutnya!</p>
+                <button @click="showDoneModal = false" class="w-full py-4 bg-emerald-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#059669] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    Siap Laksanakan!
+                </button>
+            </div>
+        </div>
+
+        <div x-show="showLockedModal" class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-8 relative shadow-2xl border-4 border-red-500 text-center" @click.away="showLockedModal = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i class="fa-solid fa-lock text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Akses Ditolak!</h3>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed text-sm">Niatnya mau nge-cheat lewat URL ya lu? Kuis ini masih digembok! Selesaiin dulu misi sebelumnya secara berurutan!</p>
+                <button @click="showLockedModal = false" class="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#b91c1c] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    Ampun Suhu
                 </button>
             </div>
         </div>

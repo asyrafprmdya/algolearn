@@ -60,7 +60,7 @@
 
     <div class="max-w-3xl mx-auto px-6 animate-fade-in-up" style="animation-delay: 0.2s">
         <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-8 text-center flex items-center justify-center gap-3">
-            <i class="fa-solid fa-book-open-reader text-indigo-500"></i> Review Dosa Lu
+            <i class="fa-solid fa-book-open-reader text-indigo-500"></i> Review Evaluasi
         </h3>
         <div class="space-y-6">
             @foreach($quiz->questions as $index => $q)

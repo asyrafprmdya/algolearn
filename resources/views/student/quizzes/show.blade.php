@@ -7,7 +7,7 @@
             'id' => $q->id,
             'type' => $q->type,
             'correct' => trim((string)$q->correct_option),
-            'explanation' => preg_replace('/\s+/', ' ', $q->explanation ?? 'GM lu males ngasih penjelasan.')
+            'explanation' => preg_replace('/\s+/', ' ', $q->explanation ?? '')
         ];
     });
 @endphp
@@ -16,16 +16,16 @@
     <div class="fixed inset-0 z-[99999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" x-data="{show: true}" x-show="show">
         <div class="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl border-4 border-amber-400 text-center">
             <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <i class="fa-solid fa-rotate-right text-4xl"></i>
+                <i class="fa-solid fa-fire text-4xl"></i>
             </div>
-            <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Ulangi Kuis?</h3>
-            <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">Lu udah pernah ngerjain kuis ini lek! Yakin mau ngulang? Keringat lu yang kemaren tetep kecatet sih, tapi menuuh-menuhin <i>database</i> GM doang.</p>
+            <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Fase Remedial!</h3>
+            <p class="text-slate-500 font-bold mb-8 text-sm leading-relaxed">Lu kemaren dapet nilai merah di kuis ini lek! Sekarang waktunya remedial. Buktiin kalau lu udah buka modul dan belajar beneran!</p>
             
             <div class="flex gap-3">
-                <a href="{{ route('student.quiz.show', ['quiz' => $quiz->id, 'confirm' => 1]) }}" class="flex-1 py-4 bg-amber-500 text-white font-black uppercase tracking-widest rounded-xl shadow-[0_4px_0_0_#d97706] hover:translate-y-[2px] hover:shadow-none transition-all text-xs flex items-center justify-center">
-                    Gaskeun Ulang
+                <a href="{{ route('student.quiz.show', ['quiz' => $quiz->id, 'confirm' => 1]) }}" onclick="document.getElementById('penjara-kuis').classList.add('bebas-murni')" class="flex-1 py-4 bg-amber-500 text-white font-black uppercase tracking-widest rounded-xl shadow-[0_4px_0_0_#d97706] hover:translate-y-[2px] hover:shadow-none transition-all text-xs flex items-center justify-center">
+                    Gaskeun Remedial
                 </a>
-                <a href="{{ route('student.tasks.index') }}" class="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all text-xs flex items-center justify-center">
+                <a href="{{ route('student.tasks.index') }}" onclick="document.getElementById('penjara-kuis').classList.add('bebas-murni')" class="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all text-xs flex items-center justify-center">
                     Balik Markas
                 </a>
             </div>
@@ -146,11 +146,7 @@
                         x-text="status[currentIndex]?.isRight ? 'Mantap! Bener Lek!' : 'Wasted! Salah lu.'"></h4>
                     
                     <div x-show="!status[currentIndex]?.isRight">
-                        <p class="text-xs font-black uppercase tracking-widest mb-1 opacity-80 text-red-800">Jawaban yang bener:</p>
-                        <p class="text-lg font-black text-red-900 mb-3 uppercase" x-text="quizData[currentIndex].correct"></p>
-                        
-                        <p class="text-xs font-black uppercase tracking-widest mb-1 opacity-80 text-red-800">Penjelasan GM:</p>
-                        <p class="text-sm font-bold leading-relaxed text-red-900" x-text="quizData[currentIndex].explanation"></p>
+                        <p class="text-sm font-bold leading-relaxed text-red-900">Mikir lagi lek! Kaga ada bocoran jawaban dari GM. Buka modulnya lagi sana!</p>
                     </div>
                 </div>
             </div>

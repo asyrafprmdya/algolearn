@@ -5,17 +5,21 @@
     .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 
-<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="{ 
-        activeTab: 'video', 
-        showQuizModal: false, 
-        isSubmittingProgress: false, 
-        showWarning: false,
-        currentIndex: 0,
-        totalQuestions: {{ $quiz && $quiz->questions ? $quiz->questions->count() : 0 }},
-        progress() {
-            return this.totalQuestions > 0 ? ((this.currentIndex + 1) / this.totalQuestions) * 100 : 0;
-        }
-    }">
+@php
+    $alpineQuizData = [];
+    if($quiz && $quiz->questions) {
+        $alpineQuizData = $quiz->questions->map(function($q) {
+            return [
+                'id' => $q->id,
+                'type' => $q->type,
+                'correct' => trim((string)$q->correct_option),
+                'explanation' => preg_replace('/\s+/', ' ', $q->explanation ?? 'GM lu males ngasih penjelasan.')
+            ];
+        });
+    }
+@endphp
+
+<div class="flex h-screen bg-slate-50 overflow-hidden" x-data="materialApp">
     
     @php
         $isLecturer = Auth::user()->role === 'lecturer'; 
@@ -249,7 +253,7 @@
                 <div class="w-full lg:w-1/4 space-y-6">
                     <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm text-center transition-all hover:border-indigo-300">
                         @if($quiz && $quiz->questions->count() > 0)
-                            <h3 class="font-black text-slate-800 mb-2 uppercase tracking-tight">Evaluasi Tersedia</h3>
+                            <h3 class="font-black text-slate-800 mb-2 uppercase tracking-tight">Latihan Tersedia</h3>
                             <p class="text-xs font-bold text-slate-500 mb-5 leading-relaxed">Uji pemahaman lu buat nyelesaiin materi ini secara resmi.</p>
                             <button @click="
                                     isSubmittingProgress = true;
@@ -263,7 +267,7 @@
                                 " 
                                 :disabled="isSubmittingProgress"
                                 class="w-full py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#4f46e5] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 text-xs">
-                                <span x-show="!isSubmittingProgress"><i class="fa-solid fa-check-double mr-2"></i> Mulai Evaluasi</span>
+                                <span x-show="!isSubmittingProgress"><i class="fa-solid fa-check-double mr-2"></i> Mulai Latihan</span>
                                 <span x-show="isSubmittingProgress"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading...</span>
                             </button>
                         @else
@@ -355,10 +359,12 @@
                                                 available: @js(explode(',', $q->options)),
                                                 selected: [],
                                                 moveToSelected(i) {
+                                                    if(status[currentIndex]?.checked) return;
                                                     this.selected.push(this.available[i]);
                                                     this.available.splice(i, 1);
                                                 },
                                                 moveToAvailable(i) {
+                                                    if(status[currentIndex]?.checked) return;
                                                     this.available.push(this.selected[i]);
                                                     this.selected.splice(i, 1);
                                                 }
@@ -369,7 +375,7 @@
                                                     <div class="w-full border-2 border-dashed border-slate-300 rounded-2xl h-14 flex items-center justify-center bg-white text-slate-400 font-bold text-sm">Susun balok di sini...</div>
                                                 </template>
                                                 <template x-for="(block, i) in selected" :key="i">
-                                                    <button @click="moveToAvailable(i)" type="button" class="px-5 py-3 bg-amber-500 text-white font-mono text-base font-bold rounded-2xl shadow-[0_4px_0_0_#b45309] active:translate-y-[4px] active:shadow-none transition-all">
+                                                    <button @click="moveToAvailable(i)" type="button" class="px-5 py-3 bg-amber-500 text-white font-mono text-base font-bold rounded-2xl shadow-[0_4px_0_0_#b45309] transition-all" :class="status[currentIndex]?.checked ? 'opacity-50 cursor-not-allowed' : 'active:translate-y-[4px] active:shadow-none'">
                                                         <span x-text="block"></span>
                                                     </button>
                                                 </template>
@@ -377,19 +383,19 @@
                                             
                                             <div class="flex flex-wrap gap-3 justify-center p-6 bg-slate-100 border-2 border-slate-200 rounded-2xl">
                                                 <template x-for="(block, i) in available" :key="i">
-                                                    <button @click="moveToSelected(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-base font-bold rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] active:translate-y-[4px] active:shadow-none transition-all">
+                                                    <button @click="moveToSelected(i)" type="button" class="px-5 py-3 bg-white text-slate-700 font-mono text-base font-bold rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] transition-all" :class="status[currentIndex]?.checked ? 'opacity-50 cursor-not-allowed' : 'active:translate-y-[4px] active:shadow-none'">
                                                         <span x-text="block"></span>
                                                     </button>
                                                 </template>
                                             </div>
-                                            <input type="hidden" name="answers[{{ $q->id }}]" :value="selected.join(' ')">
+                                            <input type="hidden" name="answers[{{ $q->id }}]" :value="selected.join(',')">
                                         </div>
                                     @else
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             @foreach(['a','b','c','d'] as $opt)
-                                                <label class="cursor-pointer group block">
+                                                <label class="cursor-pointer group block" :class="status[currentIndex]?.checked ? 'pointer-events-none opacity-80' : ''">
                                                     <input type="radio" name="answers[{{ $q->id }}]" value="{{ $opt }}" class="hidden peer">
-                                                    <div class="p-6 rounded-2xl border-2 border-slate-200 peer-checked:border-amber-400 peer-checked:bg-amber-50 text-slate-600 peer-checked:text-amber-900 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] peer-checked:shadow-[0_4px_0_0_#fbbf24] active:translate-y-[4px] active:shadow-none flex items-center bg-white">
+                                                    <div class="p-6 rounded-2xl border-2 border-slate-200 peer-checked:border-amber-400 peer-checked:bg-amber-50 text-slate-600 peer-checked:text-amber-900 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] peer-checked:shadow-[0_4px_0_0_#fbbf24] flex items-center bg-white" :class="status[currentIndex]?.checked ? '' : 'active:translate-y-[4px] active:shadow-none'">
                                                         <span class="inline-flex w-10 h-10 border-2 border-slate-200 text-slate-400 peer-checked:border-amber-400 peer-checked:text-amber-500 peer-checked:bg-white rounded-xl items-center justify-center text-sm font-black mr-4 uppercase shrink-0 transition-colors">{{ $opt }}</span>
                                                         <span class="text-lg">{{ $q->{'option_'.$opt} }}</span>
                                                     </div>
@@ -403,22 +409,62 @@
                     </div>
                 </div>
 
-                <div class="fixed bottom-0 left-0 w-full bg-white border-t-2 border-slate-200 px-6 py-6 sm:py-8 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-                    <div class="max-w-4xl mx-auto flex justify-between items-center">
-                        <button type="button" x-show="currentIndex > 0" @click="currentIndex--" class="px-6 sm:px-8 py-4 rounded-2xl font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100 active:scale-95 transition-all text-xs sm:text-sm" style="display: none;">
-                            Kembali
-                        </button>
-                        <div x-show="currentIndex === 0" class="w-16 sm:w-24"></div>
+                <div class="fixed bottom-0 left-0 w-full z-50 transition-colors duration-300 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]"
+                     :class="status[currentIndex]?.checked ? (status[currentIndex]?.isRight ? 'bg-emerald-100 border-t-2 border-emerald-200' : 'bg-red-100 border-t-2 border-red-200') : 'bg-white border-t-2 border-slate-200'">
+                    
+                    <div x-show="status[currentIndex]?.checked" 
+                         x-transition:enter="transition-all ease-out duration-300" 
+                         x-transition:enter-start="opacity-0 translate-y-8" 
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="max-w-4xl mx-auto px-6 pt-8 pb-2 flex gap-5 items-start" style="display: none;">
+                        
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center shrink-0 text-3xl shadow-sm bg-white"
+                             :class="status[currentIndex]?.isRight ? 'text-emerald-500' : 'text-red-500'">
+                             <i class="fa-solid" :class="status[currentIndex]?.isRight ? 'fa-check' : 'fa-xmark'"></i>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <h4 class="font-black text-2xl tracking-tight mb-2" 
+                                :class="status[currentIndex]?.isRight ? 'text-emerald-700' : 'text-red-700'" 
+                                x-text="status[currentIndex]?.isRight ? 'Mantap! Bener Lek!' : 'Wasted! Salah lu.'"></h4>
+                            
+                            <div x-show="!status[currentIndex]?.isRight">
+                                <p class="text-xs font-black uppercase tracking-widest mb-1 opacity-80 text-red-800">Jawaban yang bener:</p>
+                                <p class="text-lg font-black text-red-900 mb-3 uppercase" x-text="quizData[currentIndex].correct"></p>
+                                
+                                <p class="text-xs font-black uppercase tracking-widest mb-1 opacity-80 text-red-800">Penjelasan GM:</p>
+                                <p class="text-sm font-bold leading-relaxed text-red-900" x-text="quizData[currentIndex].explanation"></p>
+                            </div>
+                        </div>
+                    </div>
 
-                        <button type="button" x-show="currentIndex < totalQuestions - 1" @click="currentIndex++" class="px-10 sm:px-12 py-4 bg-amber-500 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center">
-                            Lanjut
-                        </button>
+                    <div class="px-6 py-6 sm:py-8">
+                        <div class="max-w-4xl mx-auto flex justify-end items-center">
+                            <button type="button" 
+                                    x-show="!status[currentIndex]?.checked" 
+                                    @click="checkAnswer()" 
+                                    class="px-10 sm:px-12 py-4 bg-amber-500 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#b45309] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center">
+                                Cek Jawaban
+                            </button>
 
-                        <button type="submit" x-show="currentIndex === totalQuestions - 1" style="display: none;" class="px-10 sm:px-12 py-4 bg-indigo-600 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl shadow-[0_6px_0_0_#4338ca] hover:translate-y-[2px] hover:shadow-[0_4px_0_0_#4338ca] active:translate-y-[6px] active:shadow-none transition-all w-full md:w-auto text-center flex items-center justify-center gap-3">
-                            <i class="fa-solid fa-paper-plane"></i> Submit
-                        </button>
+                            <button type="button" 
+                                    x-show="status[currentIndex]?.checked && currentIndex < totalQuestions - 1" 
+                                    @click="currentIndex++" 
+                                    class="px-10 sm:px-12 py-4 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl transition-all w-full md:w-auto text-center"
+                                    :class="status[currentIndex]?.isRight ? 'bg-emerald-500 shadow-[0_6px_0_0_#059669] hover:shadow-[0_4px_0_0_#059669] active:translate-y-[6px] active:shadow-none' : 'bg-amber-500 shadow-[0_6px_0_0_#b45309] hover:shadow-[0_4px_0_0_#b45309] active:translate-y-[6px] active:shadow-none'">
+                                Lanjut
+                            </button>
+
+                            <button type="submit" 
+                                    x-show="status[currentIndex]?.checked && currentIndex === totalQuestions - 1" 
+                                    class="px-10 sm:px-12 py-4 text-white font-black text-lg sm:text-xl uppercase tracking-widest rounded-2xl transition-all w-full md:w-auto text-center flex items-center justify-center gap-3"
+                                    :class="status[currentIndex]?.isRight ? 'bg-indigo-600 shadow-[0_6px_0_0_#4338ca] hover:shadow-[0_4px_0_0_#4338ca] active:translate-y-[6px] active:shadow-none' : 'bg-red-500 shadow-[0_6px_0_0_#b91c1c] hover:shadow-[0_4px_0_0_#b91c1c] active:translate-y-[6px] active:shadow-none'">
+                                <i class="fa-solid fa-paper-plane"></i> Submit
+                            </button>
+                        </div>
                     </div>
                 </div>
+
             </form>
         </div>
 
@@ -434,8 +480,76 @@
                 </button>
             </div>
         </div>
+
+        <div x-show="showErrorModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-3xl max-w-md w-full p-8 relative shadow-2xl border-4 border-amber-400 text-center" @click.away="showErrorModal = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-8" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+                <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <i class="fa-solid fa-triangle-exclamation text-5xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Peringatan!</h3>
+                <p class="text-slate-500 font-bold mb-8 leading-relaxed" x-text="errorMessage"></p>
+                <button @click="showErrorModal = false" class="w-full py-4 bg-amber-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_4px_0_0_#d97706] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    Oke Paham!
+                </button>
+            </div>
+        </div>
         @endif
         
     </main>
 </div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('materialApp', () => ({
+            activeTab: 'video',
+            showQuizModal: false,
+            isSubmittingProgress: false,
+            showWarning: false,
+            showErrorModal: false,
+            errorMessage: '',
+            currentIndex: 0,
+            totalQuestions: {{ $quiz && $quiz->questions ? $quiz->questions->count() : 0 }},
+            status: {},
+            quizData: @json($alpineQuizData ?? []),
+
+            progress() {
+                return this.totalQuestions > 0 ? ((this.currentIndex + 1) / this.totalQuestions) * 100 : 0;
+            },
+
+            triggerWarning(msg) {
+                this.errorMessage = msg;
+                this.showErrorModal = true;
+            },
+
+            checkAnswer() {
+                let q = this.quizData[this.currentIndex];
+                let userAns = '';
+
+                if(q.type === 'multiple_choice') {
+                    let selected = document.querySelector('input[name="answers[' + q.id + ']"]:checked');
+                    if(selected) userAns = selected.value;
+                } else {
+                    let input = document.querySelector('input[name="answers[' + q.id + ']"]');
+                    if(input) userAns = input.value;
+                }
+
+                if(!userAns) {
+                    this.triggerWarning('Pilih jawaban atau susun baloknya dulu lek! Kaga bisa asal nge-skip!');
+                    return;
+                }
+
+                let isRight = false;
+                if (q.type === 'arrange') {
+                    let cleanUserAns = userAns.replace(/\s+/g, '').toLowerCase();
+                    let cleanCorrect = q.correct.replace(/\s+/g, '').toLowerCase();
+                    isRight = (cleanUserAns === cleanCorrect);
+                } else {
+                    isRight = (userAns.toLowerCase() === q.correct.toLowerCase());
+                }
+
+                this.status[this.currentIndex] = { checked: true, isRight: isRight };
+            }
+        }));
+    });
+</script>
 @endsection

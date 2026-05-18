@@ -24,15 +24,42 @@
                 </div>
             </div>
 
+            <div class="px-6 mb-8 mt-2">
+                <p class="text-[10px] font-black {{ $isLecturer ? 'text-slate-500' : 'text-slate-400' }} uppercase tracking-widest mb-2">
+                    {{ $isLecturer ? 'Role: Dosen' : 'Status Level' }}
+                </p>
+                <div class="inline-block">
+                    <p class="text-xs font-black {{ $isLecturer ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-600 bg-emerald-50 border-emerald-100' }} py-2 px-4 rounded-xl uppercase tracking-wide border-2 shadow-sm flex items-center gap-2">
+                        <i class="fa-solid {{ $isLecturer ? 'fa-shield-halved' : 'fa-medal' }}"></i> 
+                        {{ $isLecturer ? 'Dosen Pengampu' : Auth::user()->getLevel() }}
+                    </p>
+                </div>
+            </div>
+
             <nav class="px-4 space-y-2 mb-4">
-                <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu : $textMenu }}">
-                    <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i><span>Dashboard</span>
+                <a href="{{ route('lecturer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.dashboard') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-satellite-dish w-6 text-center text-lg"></i>
+                    <span>Dashboard</span>
                 </a>
-                <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu : $textMenu }}">
-                    <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i><span>Kelola Materi</span>
+                <a href="{{ route('lecturer.materials.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.index') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i>
+                    <span>Kelola Materi</span>
                 </a>
-                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu : $textMenu }}">
-                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i><span>Bank Kuis</span>
+                <a href="{{ route('lecturer.materials.create') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.materials.create', 'lecturer.materials.edit') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-hammer w-6 text-center text-lg"></i>
+                    <span>Buat Materi</span>
+                </a>
+                <a href="{{ route('lecturer.pretest.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.pretest.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-scroll w-6 text-center text-lg"></i>
+                    <span>Markas Pretest</span>
+                </a>
+                <a href="{{ route('lecturer.quiz.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.quiz.*') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-dungeon w-6 text-center text-lg"></i>
+                    <span>Bank Kuis</span>
+                </a>
+                <a href="{{ route('lecturer.students.progress') }}" class="flex items-center space-x-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all {{ request()->routeIs('lecturer.students.progress') ? $activeMenu . ' translate-y-[-2px]' : $textMenu }}">
+                    <i class="fa-solid fa-crosshairs w-6 text-center text-lg"></i>
+                    <span>Laporan Mahasiswa</span>
                 </a>
             </nav>
         </div>
@@ -40,8 +67,9 @@
         <div class="p-4 border-t {{ $isLecturer ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white' }} shrink-0">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30' : 'text-slate-500 hover:bg-red-50' }} rounded-2xl font-bold text-sm w-full">
-                    <i class="fa-solid fa-power-off w-6 text-center text-lg"></i><span>Keluar</span>
+                <button type="submit" class="flex items-center space-x-3 px-4 py-4 {{ $isLecturer ? 'text-slate-500 hover:bg-red-900/30 hover:text-red-500' : 'text-slate-500 hover:bg-red-50 hover:text-red-600' }} rounded-2xl font-bold text-sm w-full transition-all group">
+                    <i class="fa-solid fa-power-off w-6 text-center text-lg group-hover:rotate-90 transition-transform"></i>
+                    <span>Keluar</span>
                 </button>
             </form>
         </div>
@@ -70,7 +98,7 @@
                                 <div class="p-5 rounded-2xl border-2 {{ $quiz->category === 'evaluation' ? 'border-amber-200 bg-amber-50/30' : 'border-emerald-200 bg-emerald-50/30' }} flex justify-between items-center">
                                     <div>
                                         <p class="text-[10px] font-black {{ $quiz->category === 'evaluation' ? 'text-amber-500' : 'text-emerald-500' }} uppercase tracking-widest mb-1">
-                                            {{ $quiz->category === 'evaluation' ? 'Evaluasi Pop-up' : 'Arena Latihan' }}
+                                            {{ $quiz->category === 'evaluation' ? 'Latihan Pop-up' : 'Arena Evaluasi' }}
                                         </p>
                                         <h3 class="font-black text-slate-800 tracking-tight">{{ $quiz->title }}</h3>
                                         <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase">Lulus: {{ $quiz->passing_grade }}%</p>

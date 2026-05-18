@@ -15,8 +15,7 @@ class QuizController extends Controller
     {
         $user = Auth::user();
 
-        // Satpam Anti-Cheat (Bypass URL)
-        // Mengecek apakah materi sebelumnya di level yang sama udah tuntas
+        // Satpam Anti-Cheat (Bypass URL buat yang belum kebuka)
         if ($quiz->category === 'practice') {
             $materialsInLevel = Material::where('level', $quiz->material->level)
                                         ->orderBy('created_at', 'asc')
@@ -26,13 +25,26 @@ class QuizController extends Controller
             
             if ($currentIndex > 0) {
                 $prevMaterialId = $materialsInLevel[$currentIndex - 1];
-                $completed = json_decode($user->completed_contents, true) ?? [];
                 
-                // Kalau materi/kuis sebelumnya belum kelar, tendang balik ke Arena Latihan!
+                $rawCompleted = $user->completed_contents;
+                $completed = is_array($rawCompleted) ? $rawCompleted : (json_decode($rawCompleted, true) ?? []);
+                
                 if (!in_array($prevMaterialId, $completed)) {
-                    return redirect()->route('student.tasks.index');
+                    // Tendang balik dan kirim sinyal pop-up Gembok
+                    return redirect()->route('student.tasks.index')->with('locked_warning', true);
                 }
             }
+        }
+
+        // Satpam buat yang maruk pengen ngerjain lagi padahal udah lulus
+        $hasPassed = QuizResult::where('user_id', $user->id)
+                               ->where('quiz_id', $quiz->id)
+                               ->where('is_passed', true)
+                               ->exists();
+
+        if ($hasPassed) {
+            // Tendang balik dan kirim sinyal pop-up Udah Lulus
+            return redirect()->route('student.tasks.index')->with('already_passed', true);
         }
 
         $hasTaken = QuizResult::where('user_id', $user->id)->where('quiz_id', $quiz->id)->exists();
@@ -71,7 +83,6 @@ class QuizController extends Controller
             foreach ($questions as $q) {
                 $userAns = $request->input("answers.{$q->id}");
                 if ($q->type === 'arrange') {
-                    // Sapu bersih spasi dan koma biar kebal dari typo maba
                     $cleanUser = str_replace([' ', ','], '', strtolower(trim($userAns)));
                     $cleanCorrect = str_replace([' ', ','], '', strtolower(trim($q->correct_option)));
                     if ($cleanUser === $cleanCorrect) {
@@ -95,11 +106,12 @@ class QuizController extends Controller
         ]);
 
         if ($result->is_passed) {
-            // FIX FATAL BUG: Catat ID Materi ke database biar node selanjutnya bisa kebuka!
-            $completed = json_decode($user->completed_contents, true) ?? [];
+            $rawCompleted = $user->completed_contents;
+            $completed = is_array($rawCompleted) ? $rawCompleted : (json_decode($rawCompleted, true) ?? []);
+
             if (!in_array($quiz->material_id, $completed)) {
                 $completed[] = $quiz->material_id;
-                $user->completed_contents = json_encode($completed);
+                $user->completed_contents = is_array($rawCompleted) ? $completed : json_encode($completed);
                 $user->save();
             }
 

@@ -117,11 +117,11 @@
                                         <div class="flex items-center justify-center gap-2">
                                             
                                             <a href="{{ route('lecturer.quiz.create', ['material' => $material->id, 'category' => 'practice']) }}" class="px-4 py-2 bg-emerald-50 border-2 border-emerald-200 text-emerald-600 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm">
-                                                <i class="fa-solid fa-gamepad mr-1"></i> Bikin Latihan
+                                                <i class="fa-solid fa-gamepad mr-1"></i> Bikin Evaluasi
                                             </a>
                                             
                                             <a href="{{ route('lecturer.quiz.create', ['material' => $material->id, 'category' => 'evaluation']) }}" class="px-4 py-2 bg-amber-50 border-2 border-amber-200 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm">
-                                                <i class="fa-solid fa-star mr-1"></i> Bikin Evaluasi
+                                                <i class="fa-solid fa-star mr-1"></i> Bikin Latihan
                                             </a>
                                             
                                             <a href="{{ route('lecturer.materials.edit', $material->id) }}" class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors">
