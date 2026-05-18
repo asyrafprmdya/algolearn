@@ -16,10 +16,14 @@ RUN cp .env.example .env \
     && php artisan key:generate \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# Apache config untuk Laravel
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 RUN echo '<Directory /var/www/html/public>\n    AllowOverride All\n</Directory>' >> /etc/apache2/sites-available/000-default.conf
 RUN a2enmod rewrite
 
-EXPOSE 80
+# Tambahan fix untuk Railway
+ENV PORT=80
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
+RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/g' /etc/apache2/sites-available/000-default.conf
+
+EXPOSE ${PORT}
 CMD ["apache2-foreground"]
