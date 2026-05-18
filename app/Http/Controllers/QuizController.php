@@ -13,19 +13,41 @@ class QuizController extends Controller
 {
     public function show(Request $request, Quiz $quiz)
     {
-        // Cek dosa: Apakah maba ini udah pernah ngerjain kuisnya?
-        $hasTaken = QuizResult::where('user_id', Auth::id())->where('quiz_id', $quiz->id)->exists();
+        $user = Auth::user();
 
-        // Kalo udah pernah dan belum ngasih konfirmasi, lempar variabel askRepeat
+        // Satpam Anti-Cheat (Bypass URL)
+        // Mengecek apakah materi sebelumnya di level yang sama udah tuntas
+        if ($quiz->category === 'practice') {
+            $materialsInLevel = Material::where('level', $quiz->material->level)
+                                        ->orderBy('created_at', 'asc')
+                                        ->pluck('id')->toArray();
+            
+            $currentIndex = array_search($quiz->material_id, $materialsInLevel);
+            
+            if ($currentIndex > 0) {
+                $prevMaterialId = $materialsInLevel[$currentIndex - 1];
+                $completed = json_decode($user->completed_contents, true) ?? [];
+                
+                // Kalau materi/kuis sebelumnya belum kelar, tendang balik ke Arena Latihan!
+                if (!in_array($prevMaterialId, $completed)) {
+                    return redirect()->route('student.tasks.index');
+                }
+            }
+        }
+
+        $hasTaken = QuizResult::where('user_id', $user->id)->where('quiz_id', $quiz->id)->exists();
+        
+        $viewName = view()->exists('student.quizzes.show') ? 'student.quizzes.show' : 'student.quiz.show';
+
         if ($hasTaken && !$request->has('confirm')) {
             $quiz->load('questions');
             $askRepeat = true;
-            return view('student.quizzes.show', compact('quiz', 'askRepeat'));
+            return view($viewName, compact('quiz', 'askRepeat'));
         }
 
         $quiz->load('questions');
         $askRepeat = false;
-        return view('student.quizzes.show', compact('quiz', 'askRepeat'));
+        return view($viewName, compact('quiz', 'askRepeat'));
     }
 
     public function submit(Request $request, Quiz $quiz)
@@ -49,7 +71,7 @@ class QuizController extends Controller
             foreach ($questions as $q) {
                 $userAns = $request->input("answers.{$q->id}");
                 if ($q->type === 'arrange') {
-                    // Anti-typo: bersihin koma dan spasi sebelum dicocokin
+                    // Sapu bersih spasi dan koma biar kebal dari typo maba
                     $cleanUser = str_replace([' ', ','], '', strtolower(trim($userAns)));
                     $cleanCorrect = str_replace([' ', ','], '', strtolower(trim($q->correct_option)));
                     if ($cleanUser === $cleanCorrect) {
@@ -73,6 +95,14 @@ class QuizController extends Controller
         ]);
 
         if ($result->is_passed) {
+            // FIX FATAL BUG: Catat ID Materi ke database biar node selanjutnya bisa kebuka!
+            $completed = json_decode($user->completed_contents, true) ?? [];
+            if (!in_array($quiz->material_id, $completed)) {
+                $completed[] = $quiz->material_id;
+                $user->completed_contents = json_encode($completed);
+                $user->save();
+            }
+
             $oldLevel = $user->getRawLevel();
             $this->handleLevelUp($user, $quiz);
             
@@ -127,8 +157,7 @@ class QuizController extends Controller
             ->latest()
             ->first();
 
-        // Fallback pinter biar lu kaga nangis karena view error
-        $viewName = view()->exists('student.quizzes.result') ? 'student.quizzes.result' : 'student.quizzes.result';
+        $viewName = view()->exists('student.quizzes.result') ? 'student.quizzes.result' : 'student.quiz.result';
         return view($viewName, compact('quiz', 'result'));
     }
 }
