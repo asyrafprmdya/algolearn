@@ -29,9 +29,11 @@ class LecturerController extends Controller
         return view('lecturer.progress', compact('students'));
     }
 
-    public function indexMaterial()
+   public function indexMaterial()
     {
-        $materials = Material::orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")->get(); 
+        $materials = Material::orderByRaw("FIELD(level, 'Pemula', 'Menengah', 'Lanjutan')")
+                             ->orderBy('created_at', 'asc')
+                             ->get(); 
         return view('lecturer.materials.index', compact('materials'));
     }
 
